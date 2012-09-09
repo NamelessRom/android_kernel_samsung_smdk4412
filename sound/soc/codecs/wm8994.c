@@ -187,6 +187,10 @@ static int wm8994_volatile(struct snd_soc_codec *codec, unsigned int reg)
 	}
 }
 
+#ifdef CONFIG_SND_VOODOO
+#include "wm8994_voodoo.h"
+#endif
+
 static int wm8994_write(struct snd_soc_codec *codec, unsigned int reg,
 	unsigned int value)
 {
@@ -201,6 +205,9 @@ static int wm8994_write(struct snd_soc_codec *codec, unsigned int reg,
 	}
 #endif
 
+#ifdef CONFIG_SND_VOODOO
+	value = voodoo_hook_wm8994_write(codec, reg, value);
+#endif
 	if (!wm8994_volatile(codec, reg)) {
 		ret = snd_soc_cache_write(codec, reg, value);
 		if (ret != 0)
@@ -4267,6 +4274,9 @@ static int wm8994_codec_probe(struct snd_soc_codec *codec)
 					ARRAY_SIZE(wm8958_intercon));
 		break;
 	}
+#ifdef CONFIG_SND_VOODOO
+	voodoo_hook_wm8994_pcm_probe(codec);
+#endif
 
 	return 0;
 
