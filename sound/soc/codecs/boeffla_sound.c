@@ -35,6 +35,7 @@
 #include "wm8994.h"
 
 #include "boeffla_sound.h"
+#include "boeffla_voodoo.h"
 
 // Use delayed work to re-apply eq on headphone changes
 #include <linux/jiffies.h>
@@ -164,6 +165,13 @@ void Boeffla_sound_hook_wm8994_pcm_probe(struct snd_soc_codec *codec_pointer)
 		reset_boeffla_sound();
 		printk("Boeffla-sound: boeffla sound enabled during startup\n");
 	}
+}
+
+void boeffla_sound_check_state() {
+    if (boeffla_sound == ON) {
+	boeffla_sound = OFF;
+	reset_boeffla_sound();
+    }
 }
 
 
@@ -1351,6 +1359,11 @@ static void reset_boeffla_sound(void)
 	// print debug info
 	if (debug(DEBUG_NORMAL))
 		printk("Boeffla-sound: reset_boeffla_sound started\n");
+#ifdef CONFIG_SND_VOODOO
+	if (boeffla_sound == ON) {
+	    voodoo_sound_check_state();
+	}
+#endif
 
 	// load all default values
 	initialize_global_variables();
