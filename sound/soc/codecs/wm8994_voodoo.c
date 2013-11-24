@@ -16,6 +16,7 @@
 #include <linux/switch.h>
 #include <linux/version.h>
 #include "wm8994_voodoo.h"
+#include "boeffla_voodoo.h"
 
 #ifndef MODULE
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 35) && !defined(GALAXY_TAB) && !defined(GALAXY_S3)
@@ -2006,6 +2007,10 @@ void update_enable()
 		printk("Voodoo sound: initializing driver v%d\n",
 		       VOODOO_SOUND_VERSION);
 
+#ifdef CONFIG_SND_BOEFFLA
+	boeffla_sound_check_state();
+#endif
+
 #ifdef CONFIG_SND_VOODOO_DEVELOPMENT
 		printk("Voodoo sound: codec development tools enabled\n");
 #endif
@@ -2019,6 +2024,13 @@ void update_enable()
 		}
 	} else
 		voodoo_hook_wm8994_pcm_remove();
+}
+
+void voodoo_sound_check_state() {
+    if (enable) {
+	enable = false;
+	update_enable();
+    }
 }
 
 /*
