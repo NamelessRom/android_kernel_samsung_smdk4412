@@ -336,41 +336,41 @@ static DEFINE_PER_CPU(u8 *, zswap_dstmem);
 
 static int __zswap_cpu_notifier(unsigned long action, unsigned long cpu)
 {
-        struct crypto_comp *tfm;
-        u8 *dst;
+	struct crypto_comp *tfm;
+	u8 *dst;
 
-        switch (action) {
-        case CPU_UP_PREPARE:
-                tfm = crypto_alloc_comp(zswap_compressor, 0, 0);
-                if (IS_ERR(tfm)) {
-                        pr_err("can't allocate compressor transform\n");
-                        return NOTIFY_BAD;
-                }
-                *per_cpu_ptr(zswap_comp_pcpu_tfms, cpu) = tfm;
-                dst = kmalloc(PAGE_SIZE * 2, GFP_KERNEL);
-                if (!dst) {
-                        pr_err("can't allocate compressor buffer\n");
-                        crypto_free_comp(tfm);
-                        *per_cpu_ptr(zswap_comp_pcpu_tfms, cpu) = NULL;
-                        return NOTIFY_BAD;
-                }
-                per_cpu(zswap_dstmem, cpu) = dst;
-                break;
-        case CPU_DEAD:
-        case CPU_UP_CANCELED:
-                tfm = *per_cpu_ptr(zswap_comp_pcpu_tfms, cpu);
-                if (tfm) {
-                        crypto_free_comp(tfm);
-                        *per_cpu_ptr(zswap_comp_pcpu_tfms, cpu) = NULL;
-                }
-                dst = per_cpu(zswap_dstmem, cpu);
-                kfree(dst);
-                per_cpu(zswap_dstmem, cpu) = NULL;
-                break;
-        default:
-                break;
-        }
-        return NOTIFY_OK;
+	switch (action) {
+	case CPU_UP_PREPARE:
+		tfm = crypto_alloc_comp(zswap_compressor, 0, 0);
+		if (IS_ERR(tfm)) {
+			pr_err("can't allocate compressor transform\n");
+			return NOTIFY_BAD;
+		}
+		*per_cpu_ptr(zswap_comp_pcpu_tfms, cpu) = tfm;
+		dst = kmalloc_node(PAGE_SIZE * 2, GFP_KERNEL, cpu_to_node(cpu));
+		if (!dst) {
+			pr_err("can't allocate compressor buffer\n");
+			crypto_free_comp(tfm);
+			*per_cpu_ptr(zswap_comp_pcpu_tfms, cpu) = NULL;
+			return NOTIFY_BAD;
+		}
+		per_cpu(zswap_dstmem, cpu) = dst;
+		break;
+	case CPU_DEAD:
+	case CPU_UP_CANCELED:
+		tfm = *per_cpu_ptr(zswap_comp_pcpu_tfms, cpu);
+		if (tfm) {
+			crypto_free_comp(tfm);
+			*per_cpu_ptr(zswap_comp_pcpu_tfms, cpu) = NULL;
+		}
+		dst = per_cpu(zswap_dstmem, cpu);
+		kfree(dst);
+		per_cpu(zswap_dstmem, cpu) = NULL;
+		break;
+	default:
+		break;
+	}
+	return NOTIFY_OK;
 }
 
 static int zswap_cpu_notifier(struct notifier_block *nb,
