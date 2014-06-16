@@ -163,7 +163,6 @@ static void haptic_work(struct work_struct *work)
 		max77693_haptic_i2c(hap_data, true);
 
 		pwm_config(hap_data->pwm, pwm_duty, hap_data->pdata->period);
-        pr_info("[VIB] %s: pwm_config duty=%d\n", __func__, pwm_duty);
 		pwm_enable(hap_data->pwm);
 
 		if (hap_data->pdata->motor_en)
@@ -252,7 +251,6 @@ void vibtonz_pwm(int nForce)
 	if (prev_duty != pwm_duty) {
 		prev_duty = pwm_duty;
 
-        pr_debug("[VIB] %s: setting pwm_duty=%d", __func__, pwm_duty);
 		pwm_config(g_hap_data->pwm, pwm_duty, pwm_period);
 	}
 #if SEC_DEBUG_VIB
