@@ -72,6 +72,7 @@ typedef enum
 	_MALI_UK_FENCE_CREATE_EMPTY,           /**< _mali_ukk_fence_create_empty() */
 	_MALI_UK_FENCE_CREATE_SIGNALLED,  /**< _mali_ukk_fence_create_signalled() */
 	_MALI_UK_FENCE_VALIDATE,          /**< _mali_ukk_fence_validate() */
+	_MALI_UK_COMPOSITOR_PRIORITY,     /**< _mali_ukk_compositor_priority()  */
 
 	/** Memory functions */
 
@@ -754,7 +755,8 @@ typedef struct
 } _mali_uk_get_api_version_s;
 /** @} */ /* end group _mali_uk_getapiversion_s */
 
-/** @defgroup _mali_uk_get_user_settings_s Get user space settings */
+/** @defgroup _mali_uk_get_user_settings_s Get user space settings
+ *  @{ */
 
 /** @brief struct to keep the matching values of the user space settings within certain context
  *
@@ -778,6 +780,14 @@ typedef struct
 	_mali_uk_user_setting_t setting; /**< [in] setting to get */
 	u32 value;                       /**< [out] value of setting */
 } _mali_uk_get_user_setting_s;
+
+/** @} */ /* end group _mali_uk_get_user_settings_s */
+
+/** @brief  Arguments for _mali_ukk_compositor_priority */
+typedef struct
+{
+	void *ctx;                       /**< [in,out] user-kernel context (trashed on output) */
+} _mali_uk_compositor_priority_s;
 
 /** @} */ /* end group _mali_uk_core */
 
