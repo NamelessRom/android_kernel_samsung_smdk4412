@@ -21,6 +21,9 @@
 #include "mali_osk.h"
 #include <linux/mali/mali_utgard.h>
 #include <linux/platform_device.h>
+/* @Enable or Disable Mali GPU Bottom Lock feature */
+#define MALI_GPU_BOTTOM_LOCK 1
+#define MALI_VOLTAGE_LOCK 1
 
 #ifdef __cplusplus
 extern "C" {
@@ -92,6 +95,26 @@ void mali_regulator_enable(void);
 void mali_regulator_set_voltage(int min_uV, int max_uV);
 #endif
 
+#ifdef CONFIG_MALI_DVFS
+ssize_t show_time_in_state(struct device *dev, struct device_attribute *attr, char *buf);
+ssize_t set_time_in_state(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
+#ifdef CONFIG_CPU_EXYNOS4210
+#if MALI_GPU_BOTTOM_LOCK
+int mali_dvfs_bottom_lock_push(void);
+int mali_dvfs_bottom_lock_pop(void);
+#endif
+#else
+int mali_dvfs_bottom_lock_push(int lock_step);
+int mali_dvfs_bottom_lock_pop(void);
+#endif
+#endif
+
+#if MALI_VOLTAGE_LOCK
+int mali_voltage_lock_push(int lock_vol);
+int mali_voltage_lock_pop(void);
+int mali_voltage_lock_init(void);
+int mali_vol_get_from_table(int vol);
+#endif
 #ifdef __cplusplus
 }
 #endif
