@@ -31,8 +31,8 @@
 #include <mach/gpufreq.h>
 #endif
 
-#if defined(CONFIG_CPU_EXYNOS4412) && defined(CONFIG_VIDEO_MALI400MP) \
-		&& defined(CONFIG_VIDEO_MALI400MP_DVFS)
+#if defined(CONFIG_CPU_EXYNOS4412) && defined(CONFIG_MALI400) \
+		&& defined(CONFIG_MALI_DVFS)
 #define CONFIG_PEGASUS_GPU_LOCK
 extern int mali_dvfs_bottom_lock_push(int lock_step);
 extern int mali_dvfs_bottom_lock_pop(void);

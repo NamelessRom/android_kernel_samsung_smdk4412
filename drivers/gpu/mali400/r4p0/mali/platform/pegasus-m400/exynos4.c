@@ -21,9 +21,6 @@
 #include <linux/suspend.h>
 #include <linux/dma-mapping.h>
 
-//#include <mach/map.h>
-//#include <mach/irqs.h>
-
 #ifdef CONFIG_PM_RUNTIME
 #include <linux/pm_runtime.h>
 #endif
@@ -40,9 +37,7 @@
 
 #include "exynos4_pmm.h"
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,4,0)
-//extern void exynos3_add_mali_dev_to_domain(void);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(3,0,0)
 extern struct platform_device exynos4_device_pd[];
 #else
 extern struct platform_device s5pv310_device_pd[];
@@ -60,9 +55,6 @@ static int mali_runtime_idle(struct device *device);
 #endif
 
 static u64 exynos3472_g3d_dma_mask = DMA_BIT_MASK(32);
-
-
-//#define MALI_BASE_ADDR EXYNOS_PA_G3D
 
 #if defined(CONFIG_ARCH_S5PV310) && !defined(CONFIG_BOARD_HKDKC210)
 

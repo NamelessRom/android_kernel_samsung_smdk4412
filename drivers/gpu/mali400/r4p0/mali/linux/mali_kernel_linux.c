@@ -114,13 +114,6 @@ static u32 mali_cpu_clock_last_value[8] = {0,};
 #include "mali_user_settings_db.h"
 EXPORT_SYMBOL(mali_set_user_setting);
 EXPORT_SYMBOL(mali_get_user_setting);
-#if defined(CONFIG_MALI_DVFS)
-/* MALI_SEC */
-extern int mali_dvfs_control;
-module_param(mali_dvfs_control, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP| S_IROTH); /* rw-rw-r-- */
-MODULE_PARM_DESC(mali_dvfs_control, "Mali Current DVFS");
-
-#endif
 
 static char mali_dev_name[] = "mali0"; /* should be const, but the functions we call requires non-cost */
 
@@ -214,12 +207,6 @@ struct file_operations mali_fops = {
 #endif
 	.mmap = mali_mmap
 };
-
-#ifdef CONFIG_MALI_DVFS
-extern ssize_t show_time_in_state(struct device *dev, struct device_attribute *attr, char *buf);
-extern ssize_t set_time_in_state(struct device *dev, struct device_attribute *attr, const char *buf, size_t count);
-DEVICE_ATTR(time_in_state, S_IRUGO|S_IWUSR, show_time_in_state, set_time_in_state);
-#endif
 
 #if MALI_ENABLE_CPU_CYCLES
 void mali_init_cpu_time_counters(int reset, int enable_divide_by_64)
@@ -418,12 +405,6 @@ static int mali_probe(struct platform_device *pdev)
 		MALI_PRINT_ERROR(("mali_probe(): The Mali driver is already connected with a Mali device."));
 		return -EEXIST;
 	}
-
-#ifdef CONFIG_MALI_DVFS
-	if (device_create_file(&pdev->dev, &dev_attr_time_in_state)) {
-		dev_err(&pdev->dev, "Couldn't create sysfs file [time_in_state]\n");
-	}
-#endif
 
 	mali_platform_device = pdev;
 
