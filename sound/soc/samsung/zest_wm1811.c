@@ -1,5 +1,5 @@
 /*
- *  t0_wm1811.c
+ *  zest_wm1811.c
  *
  *  Copyright (c) 2011 Samsung Electronics Co. Ltd
  *
@@ -117,14 +117,14 @@ static int jack_get_adc_data(struct s3c_adc_client *padc);
 static void jack_set_type(struct wm1811_machine_priv *wm1811, int jack_type);
 #endif
 
-static struct wm8958_micd_rate t0_det_rates[] = {
+static struct wm8958_micd_rate zest_det_rates[] = {
 	{ MIDAS_DEFAULT_MCLK2,     true,  0,  0 },
 	{ MIDAS_DEFAULT_MCLK2,    false,  0,  0 },
 	{ MIDAS_DEFAULT_SYNC_CLK,  true,  7,  7 },
 	{ MIDAS_DEFAULT_SYNC_CLK, false,  7,  7 },
 };
 
-static struct wm8958_micd_rate t0_jackdet_rates[] = {
+static struct wm8958_micd_rate zest_jackdet_rates[] = {
 	{ MIDAS_DEFAULT_MCLK2,     true,  0,  0 },
 	{ MIDAS_DEFAULT_MCLK2,    false,  0,  0 },
 	{ MIDAS_DEFAULT_SYNC_CLK,  true, 12, 12 },
@@ -156,7 +156,7 @@ static struct class *jack_class;
 static struct device *jack_dev;
 #endif
 
-static struct platform_device *t0_snd_device;
+static struct platform_device *zest_snd_device;
 
 static const struct soc_enum switch_mode_enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(switch_mode_text), switch_mode_text),
@@ -472,7 +472,7 @@ static int set_muic_switch(struct snd_soc_dapm_widget *w,
 	return 0;
 }
 
-static void t0_micd_set_rate(struct snd_soc_codec *codec)
+static void zest_micd_set_rate(struct snd_soc_codec *codec)
 {
 	struct wm8994_priv *wm8994 = snd_soc_codec_get_drvdata(codec);
 	int best, i, sysclk, val;
@@ -489,14 +489,14 @@ static void t0_micd_set_rate(struct snd_soc_codec *codec)
 		sysclk = wm8994->aifclk[0];
 
 	if (wm8994->jackdet) {
-		rates = t0_jackdet_rates;
-		num_rates = ARRAY_SIZE(t0_jackdet_rates);
-		wm8994->pdata->micd_rates = t0_jackdet_rates;
+		rates = zest_jackdet_rates;
+		num_rates = ARRAY_SIZE(zest_jackdet_rates);
+		wm8994->pdata->micd_rates = zest_jackdet_rates;
 		wm8994->pdata->num_micd_rates = num_rates;
 	} else {
-		rates = t0_det_rates;
-		num_rates = ARRAY_SIZE(t0_det_rates);
-		wm8994->pdata->micd_rates = t0_det_rates;
+		rates = zest_det_rates;
+		num_rates = ARRAY_SIZE(zest_det_rates);
+		wm8994->pdata->micd_rates = zest_det_rates;
 		wm8994->pdata->num_micd_rates = num_rates;
 	}
 
@@ -617,7 +617,7 @@ static void jack_set_type(struct wm1811_machine_priv *wm1811, int jack_type)
 		wm8994->mic_detecting = false;
 		wm8994->jack_mic = true;
 
-		t0_micd_set_rate(wm1811->codec);
+		zest_micd_set_rate(wm1811->codec);
 
 		snd_soc_jack_report(wm8994->micdet[0].jack, SND_JACK_HEADSET,
 				    SND_JACK_HEADSET);
@@ -628,7 +628,7 @@ static void jack_set_type(struct wm1811_machine_priv *wm1811, int jack_type)
 		dev_info(wm1811->codec->dev, "Detected headphone\n");
 		wm8994->mic_detecting = false;
 
-		t0_micd_set_rate(wm1811->codec);
+		zest_micd_set_rate(wm1811->codec);
 
 		snd_soc_jack_report(wm8994->micdet[0].jack, SND_JACK_HEADPHONE,
 				    SND_JACK_HEADSET);
@@ -656,7 +656,7 @@ static void jack_set_type(struct wm1811_machine_priv *wm1811, int jack_type)
 	}
 }
 
-static void t0_micdet(void *data)
+static void zest_micdet(void *data)
 {
 	struct wm1811_machine_priv *wm1811 = data;
 	struct wm8994_priv *wm8994 = snd_soc_codec_get_drvdata(wm1811->codec);
@@ -679,7 +679,7 @@ static void t0_micdet(void *data)
 	}
 #endif
 
-static void t0_mic_id(void *data, u16 status)
+static void zest_mic_id(void *data, u16 status)
 {
 	struct wm1811_machine_priv *wm1811 = data;
 	struct wm8994_priv *wm8994 = snd_soc_codec_get_drvdata(wm1811->codec);
@@ -695,7 +695,7 @@ static void t0_mic_id(void *data, u16 status)
 			wm8994->jack_mic = false;
 			wm8994->mic_detecting = true;
 
-			t0_micd_set_rate(wm1811->codec);
+			zest_micd_set_rate(wm1811->codec);
 
 			snd_soc_jack_report(wm8994->micdet[0].jack, 0,
 					    wm8994->btn_mask |
@@ -714,7 +714,7 @@ static void t0_mic_id(void *data, u16 status)
 		wm8994->mic_detecting = false;
 		wm8994->jack_mic = true;
 
-		t0_micd_set_rate(wm1811->codec);
+		zest_micd_set_rate(wm1811->codec);
 
 		snd_soc_jack_report(wm8994->micdet[0].jack, SND_JACK_HEADSET,
 				    SND_JACK_HEADSET);
@@ -724,7 +724,7 @@ static void t0_mic_id(void *data, u16 status)
 		dev_info(wm1811->codec->dev, "Detected headphone\n");
 		wm8994->mic_detecting = false;
 
-		t0_micd_set_rate(wm1811->codec);
+		zest_micd_set_rate(wm1811->codec);
 
 		snd_soc_jack_report(wm8994->micdet[0].jack, SND_JACK_HEADPHONE,
 				    SND_JACK_HEADSET);
@@ -756,7 +756,7 @@ static void t0_mic_id(void *data, u16 status)
 	}
 }
 
-static int t0_wm1811_aif1_hw_params(struct snd_pcm_substream *substream,
+static int zest_wm1811_aif1_hw_params(struct snd_pcm_substream *substream,
 	struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
@@ -810,24 +810,25 @@ static int t0_wm1811_aif1_hw_params(struct snd_pcm_substream *substream,
 }
 
 /*
- * T0 WM1811 DAI operations.
+ * ZEST WM1811 DAI operations.
  */
-static struct snd_soc_ops t0_wm1811_aif1_ops = {
-	.hw_params = t0_wm1811_aif1_hw_params,
+static struct snd_soc_ops zest_wm1811_aif1_ops = {
+	.hw_params = zest_wm1811_aif1_hw_params,
 };
 
-static int t0_wm1811_aif2_hw_params(struct snd_pcm_substream *substream,
+static int zest_wm1811_aif2_hw_params(struct snd_pcm_substream *substream,
 					struct snd_pcm_hw_params *params)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
-	struct snd_soc_codec *codec = rtd->codec;
 	struct snd_soc_dai *codec_dai = rtd->codec_dai;
 	int ret;
 	int prate;
 	int bclk;
 
 	dev_info(codec_dai->dev, "%s ++\n", __func__);
+
 	prate = params_rate(params);
+
 	switch (params_rate(params)) {
 	case 8000:
 	case 16000:
@@ -838,29 +839,28 @@ static int t0_wm1811_aif2_hw_params(struct snd_pcm_substream *substream,
 		prate = 8000;
 	}
 
-	/* Set the codec DAI configuration, aif2_mode:0 is slave */
-	if (aif2_mode == 0)
-		ret = snd_soc_dai_set_fmt(codec_dai, SND_SOC_DAIFMT_I2S
-					| SND_SOC_DAIFMT_NB_NF
-					| SND_SOC_DAIFMT_CBS_CFS);
-	else
-		ret = snd_soc_dai_set_fmt(codec_dai, SND_SOC_DAIFMT_I2S
-					| SND_SOC_DAIFMT_NB_NF
-					| SND_SOC_DAIFMT_CBM_CFM);
-
+	/* Set the codec DAI configuration */
+	if (aif2_mode == 0) {
+		ret = snd_soc_dai_set_fmt(codec_dai, SND_SOC_DAIFMT_DSP_A
+			| SND_SOC_DAIFMT_IB_NF | SND_SOC_DAIFMT_CBS_CFS);
+	} else {
+		ret = snd_soc_dai_set_fmt(codec_dai, SND_SOC_DAIFMT_DSP_A
+				| SND_SOC_DAIFMT_IB_NF
+				| SND_SOC_DAIFMT_CBM_CFM);
+	}
 	if (ret < 0)
 		return ret;
 
+	/* The Shannon Audio interface is setted only 2048 bclk */
 	switch (prate) {
 	case 8000:
-		bclk = 256000;
-		break;
 	case 16000:
-		bclk = 512000;
+		bclk = 2048000;
 		break;
 	default:
 		return -EINVAL;
 	}
+
 
 	if (aif2_mode == 0) {
 		ret = snd_soc_dai_set_pll(codec_dai, WM8994_FLL2,
@@ -880,23 +880,16 @@ static int t0_wm1811_aif2_hw_params(struct snd_pcm_substream *substream,
 	if (ret < 0)
 		dev_err(codec_dai->dev, "Unable to switch to FLL2: %d\n", ret);
 
-	if (!(snd_soc_read(codec, WM8994_INTERRUPT_RAW_STATUS_2)
-		& WM8994_FLL2_LOCK_STS)) {
-		dev_info(codec_dai->dev, "%s: use mclk1 for FLL2\n", __func__);
-		ret = snd_soc_dai_set_pll(codec_dai, WM8994_FLL2,
-			WM8994_FLL_SRC_MCLK1,
-			MIDAS_DEFAULT_MCLK1, prate * 256);
-	}
-
 	dev_info(codec_dai->dev, "%s --\n", __func__);
+
 	return 0;
 }
 
-static struct snd_soc_ops t0_wm1811_aif2_ops = {
-	.hw_params = t0_wm1811_aif2_hw_params,
+static struct snd_soc_ops zest_wm1811_aif2_ops = {
+	.hw_params = zest_wm1811_aif2_hw_params,
 };
 
-static int t0_wm1811_aif3_hw_params(struct snd_pcm_substream *substream,
+static int zest_wm1811_aif3_hw_params(struct snd_pcm_substream *substream,
 					struct snd_pcm_hw_params *params)
 {
 	pr_err("%s: enter\n", __func__);
@@ -906,7 +899,7 @@ static int t0_wm1811_aif3_hw_params(struct snd_pcm_substream *substream,
 static bool playback_stream_status;
 static bool capture_stream_status;
 
-static int t0_wm1811_aif3_startup(struct snd_pcm_substream *substream)
+static int zest_wm1811_aif3_startup(struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_codec *codec = rtd->codec;
@@ -932,7 +925,7 @@ static int t0_wm1811_aif3_startup(struct snd_pcm_substream *substream)
 	return 0;
 }
 
-static void t0_wm1811_aif3_shutdown(struct snd_pcm_substream *substream)
+static void zest_wm1811_aif3_shutdown(struct snd_pcm_substream *substream)
 {
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct snd_soc_codec *codec = rtd->codec;
@@ -959,13 +952,13 @@ static void t0_wm1811_aif3_shutdown(struct snd_pcm_substream *substream)
 	return;
 }
 
-static struct snd_soc_ops t0_wm1811_aif3_ops = {
-	.startup = t0_wm1811_aif3_startup,
-	.shutdown = t0_wm1811_aif3_shutdown,
-	.hw_params = t0_wm1811_aif3_hw_params,
+static struct snd_soc_ops zest_wm1811_aif3_ops = {
+	.startup = zest_wm1811_aif3_startup,
+	.shutdown = zest_wm1811_aif3_shutdown,
+	.hw_params = zest_wm1811_aif3_hw_params,
 };
 
-static const struct snd_kcontrol_new t0_controls[] = {
+static const struct snd_kcontrol_new zest_controls[] = {
 	SOC_DAPM_PIN_SWITCH("HP"),
 	SOC_DAPM_PIN_SWITCH("SPK"),
 	SOC_DAPM_PIN_SWITCH("RCV"),
@@ -995,7 +988,7 @@ static const struct snd_kcontrol_new t0_controls[] = {
 		get_aif2_mute_status, set_aif2_mute_status),
 };
 
-const struct snd_soc_dapm_widget t0_dapm_widgets[] = {
+const struct snd_soc_dapm_widget zest_dapm_widgets[] = {
 	SND_SOC_DAPM_HP("HP", NULL),
 	SND_SOC_DAPM_SPK("SPK", NULL),
 	SND_SOC_DAPM_SPK("RCV", NULL),
@@ -1010,7 +1003,7 @@ const struct snd_soc_dapm_widget t0_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("S5P RP"),
 };
 
-const struct snd_soc_dapm_route t0_dapm_routes[] = {
+const struct snd_soc_dapm_route zest_dapm_routes[] = {
 	{ "HP", NULL, "HPOUT1L" },
 	{ "HP", NULL, "HPOUT1R" },
 
@@ -1026,27 +1019,27 @@ const struct snd_soc_dapm_route t0_dapm_routes[] = {
 	{ "HDMI", NULL, "LINEOUT1N" },
 	{ "HDMI", NULL, "LINEOUT1P" },
 
-	{ "IN2LP:VXRN", NULL, "Main Mic" },
-	{ "IN2LN", NULL, "Main Mic" },
+	{ "IN1LP", NULL, "Main Mic" },
+	{ "IN1LN", NULL, "Main Mic" },
 
-	{ "IN1RP", NULL, "Sub Mic" },
-	{ "IN1RN", NULL, "Sub Mic" },
+	{ "IN2RN", NULL, "Sub Mic" },
+	{ "IN2RP:VXRP", NULL, "Sub Mic" },
 
-	{ "IN1LP", NULL, "MICBIAS2" },
+	{ "IN1RP", NULL, "MICBIAS2" },
 	{ "MICBIAS2", NULL, "Headset Mic" },
-	{ "IN1LN", NULL, "MICBIAS2" },
+	{ "IN1RP", NULL, "MICBIAS2" },
 	{ "MICBIAS2", NULL, "Headset Mic" },
 
 	{ "AIF1DAC1L", NULL, "S5P RP" },
 	{ "AIF1DAC1R", NULL, "S5P RP" },
 
-	{ "IN2RN", NULL, "FM In" },
-	{ "IN2RP:VXRP", NULL, "FM In" },
+	{ "IN2LP:VXRN", NULL, "FM In" },
+	{ "IN2LN", NULL, "FM In" },
 };
 
-static struct snd_soc_dai_driver t0_ext_dai[] = {
+static struct snd_soc_dai_driver zest_ext_dai[] = {
 	{
-		.name = "t0.cp",
+		.name = "zest.cp",
 		.playback = {
 			.channels_min = 1,
 			.channels_max = 2,
@@ -1065,7 +1058,7 @@ static struct snd_soc_dai_driver t0_ext_dai[] = {
 		},
 	},
 	{
-		.name = "t0.bt",
+		.name = "zest.bt",
 		.playback = {
 			.channels_min = 1,
 			.channels_max = 2,
@@ -1149,7 +1142,7 @@ static ssize_t earjack_select_jack_store(struct device *dev,
 	wm8994->mic_detecting = false;
 	wm8994->jack_mic = true;
 
-	t0_micd_set_rate(codec);
+	zest_micd_set_rate(codec);
 
 	if ((!size) || (buf[0] != '1')) {
 		snd_soc_jack_report(wm8994->micdet[0].jack,
@@ -1192,7 +1185,7 @@ static DEVICE_ATTR(state, S_IRUGO | S_IWUSR | S_IWGRP,
 		   earjack_state_show, earjack_state_store);
 #endif
 
-static int t0_wm1811_init_paiftx(struct snd_soc_pcm_runtime *rtd)
+static int zest_wm1811_init_paiftx(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_codec *codec = rtd->codec;
 	struct wm1811_machine_priv *wm1811
@@ -1210,16 +1203,16 @@ static int t0_wm1811_init_paiftx(struct snd_soc_pcm_runtime *rtd)
 	rtd->codec_dai->driver->playback.channels_max =
 				rtd->cpu_dai->driver->playback.channels_max;
 
-	ret = snd_soc_add_controls(codec, t0_controls,
-					ARRAY_SIZE(t0_controls));
+	ret = snd_soc_add_controls(codec, zest_controls,
+					ARRAY_SIZE(zest_controls));
 
-	ret = snd_soc_dapm_new_controls(&codec->dapm, t0_dapm_widgets,
-					   ARRAY_SIZE(t0_dapm_widgets));
+	ret = snd_soc_dapm_new_controls(&codec->dapm, zest_dapm_widgets,
+					   ARRAY_SIZE(zest_dapm_widgets));
 	if (ret != 0)
 		dev_err(codec->dev, "Failed to add DAPM widgets: %d\n", ret);
 
-	ret = snd_soc_dapm_add_routes(&codec->dapm, t0_dapm_routes,
-					   ARRAY_SIZE(t0_dapm_routes));
+	ret = snd_soc_dapm_add_routes(&codec->dapm, zest_dapm_routes,
+					   ARRAY_SIZE(zest_dapm_routes));
 	if (ret != 0)
 		dev_err(codec->dev, "Failed to add DAPM routes: %d\n", ret);
 
@@ -1258,7 +1251,17 @@ static int t0_wm1811_init_paiftx(struct snd_soc_pcm_runtime *rtd)
 
 	wm1811->codec = codec;
 
-	t0_micd_set_rate(codec);
+	/* Configure Hidden registers of WM1811 to conform of
+	 * the Samsung's standard Revision 1.1 for earphones */
+	snd_soc_write(codec, 0x102, 0x3);
+	snd_soc_write(codec, 0xcb, 0x5151);
+	snd_soc_write(codec, 0xd3, 0x3f3f);
+	snd_soc_write(codec, 0xd4, 0x3f3f);
+	snd_soc_write(codec, 0xd5, 0x3f3f);
+	snd_soc_write(codec, 0xd6, 0x3228);
+	snd_soc_write(codec, 0x102, 0x0);
+
+	zest_micd_set_rate(codec);
 
 #ifdef CONFIG_SEC_DEV_JACK
 	/* By default use idle_bias_off, will override for WM8994 */
@@ -1266,7 +1269,7 @@ static int t0_wm1811_init_paiftx(struct snd_soc_pcm_runtime *rtd)
 #else /* CONFIG_SEC_DEV_JACK */
 	wm1811->jack.status = 0;
 
-	ret = snd_soc_jack_new(codec, "T0 Jack",
+	ret = snd_soc_jack_new(codec, "ZEST Jack",
 				SND_JACK_HEADSET | SND_JACK_BTN_0 |
 				SND_JACK_BTN_1 | SND_JACK_BTN_2,
 				&wm1811->jack);
@@ -1296,14 +1299,14 @@ static int t0_wm1811_init_paiftx(struct snd_soc_pcm_runtime *rtd)
 #ifdef CONFIG_USE_ADC_DET
 		if (sound_pdata->use_jackdet_type) {
 			ret = wm8958_mic_detect(codec, &wm1811->jack,
-					t0_micdet, wm1811, NULL, NULL);
+					zest_micdet, wm1811, NULL, NULL);
 		} else {
 			ret = wm8958_mic_detect(codec, &wm1811->jack, NULL,
-				NULL, t0_mic_id, wm1811);
+				NULL, zest_mic_id, wm1811);
 		}
 #else
 		ret = wm8958_mic_detect(codec, &wm1811->jack, NULL,
-				NULL, t0_mic_id, wm1811);
+				NULL, zest_mic_id, wm1811);
 #endif
 		if (ret < 0)
 			dev_err(codec->dev, "Failed start detection: %d\n",
@@ -1317,7 +1320,7 @@ static int t0_wm1811_init_paiftx(struct snd_soc_pcm_runtime *rtd)
 	enable_irq_wake(control->irq);
 
 	wake_lock_init(&wm1811->jackdet_wake_lock,
-					WAKE_LOCK_SUSPEND, "T0_jackdet");
+					WAKE_LOCK_SUSPEND, "zest_jackdet");
 
 	/* To support PBA function test */
 	jack_class = class_create(THIS_MODULE, "audio");
@@ -1353,12 +1356,12 @@ static int t0_wm1811_init_paiftx(struct snd_soc_pcm_runtime *rtd)
 
 #ifdef CONFIG_USE_ADC_DET
 	pr_info("%s: register adc client\n", __func__);
-	wm1811->padc = s3c_adc_register(t0_snd_device, NULL, NULL, 0);
+	wm1811->padc = s3c_adc_register(zest_snd_device, NULL, NULL, 0);
 #endif
 	return snd_soc_dapm_sync(&codec->dapm);
 }
 
-static struct snd_soc_dai_link t0_dai[] = {
+static struct snd_soc_dai_link zest_dai[] = {
 	{ /* Sec_Fifo DAI i/f */
 		.name = "Sec_FIFO TX",
 		.stream_name = "Sec_Dai",
@@ -1370,27 +1373,27 @@ static struct snd_soc_dai_link t0_dai[] = {
 		.platform_name = "samsung-audio",
 #endif
 		.codec_name = "wm8994-codec",
-		.init = t0_wm1811_init_paiftx,
-		.ops = &t0_wm1811_aif1_ops,
+		.init = zest_wm1811_init_paiftx,
+		.ops = &zest_wm1811_aif1_ops,
 	},
 	{
-		.name = "T0_WM1811 Voice",
+		.name = "ZEST_WM1811 Voice",
 		.stream_name = "Voice Tx/Rx",
-		.cpu_dai_name = "t0.cp",
+		.cpu_dai_name = "zest.cp",
 		.codec_dai_name = "wm8994-aif2",
 		.platform_name = "snd-soc-dummy",
 		.codec_name = "wm8994-codec",
-		.ops = &t0_wm1811_aif2_ops,
+		.ops = &zest_wm1811_aif2_ops,
 		.ignore_suspend = 1,
 	},
 	{
-		.name = "T0_WM1811 BT",
+		.name = "ZEST_WM1811 BT",
 		.stream_name = "BT Tx/Rx",
-		.cpu_dai_name = "t0.bt",
+		.cpu_dai_name = "zest.bt",
 		.codec_dai_name = "wm8994-aif3",
 		.platform_name = "snd-soc-dummy",
 		.codec_name = "wm8994-codec",
-		.ops = &t0_wm1811_aif3_ops,
+		.ops = &zest_wm1811_aif3_ops,
 		.ignore_suspend = 1,
 	},
 	{ /* Primary DAI i/f */
@@ -1400,11 +1403,11 @@ static struct snd_soc_dai_link t0_dai[] = {
 		.codec_dai_name = "wm8994-aif1",
 		.platform_name = "samsung-audio",
 		.codec_name = "wm8994-codec",
-		.ops = &t0_wm1811_aif1_ops,
+		.ops = &zest_wm1811_aif1_ops,
 	},
 };
 
-static int t0_card_suspend_pre(struct snd_soc_card *card)
+static int zest_card_suspend_pre(struct snd_soc_card *card)
 {
 	struct snd_soc_codec *codec = card->rtd->codec;
 	struct wm8994_priv *wm8994 = snd_soc_codec_get_drvdata(codec);
@@ -1428,7 +1431,7 @@ static int t0_card_suspend_pre(struct snd_soc_card *card)
 	return 0;
 }
 
-static int t0_card_suspend_post(struct snd_soc_card *card)
+static int zest_card_suspend_post(struct snd_soc_card *card)
 {
 	struct snd_soc_codec *codec = card->rtd->codec;
 	struct snd_soc_dai *aif1_dai = card->rtd[0].codec_dai;
@@ -1474,7 +1477,7 @@ static int t0_card_suspend_post(struct snd_soc_card *card)
 	return 0;
 }
 
-static int t0_card_resume_pre(struct snd_soc_card *card)
+static int zest_card_resume_pre(struct snd_soc_card *card)
 {
 	struct snd_soc_codec *codec = card->rtd->codec;
 	struct snd_soc_dai *aif1_dai = card->rtd[0].codec_dai;
@@ -1503,7 +1506,7 @@ static int t0_card_resume_pre(struct snd_soc_card *card)
 	return 0;
 }
 
-static int t0_card_resume_post(struct snd_soc_card *card)
+static int zest_card_resume_post(struct snd_soc_card *card)
 {
 	struct snd_soc_codec *codec = card->rtd->codec;
 	struct wm8994_priv *wm8994 = snd_soc_codec_get_drvdata(codec);
@@ -1540,21 +1543,21 @@ static int t0_card_resume_post(struct snd_soc_card *card)
 	return 0;
 }
 
-static struct snd_soc_card t0_card = {
-	.name = "T0_WM1811",
-	.dai_link = t0_dai,
+static struct snd_soc_card zest_card = {
+	.name = "ZEST_WM1811",
+	.dai_link = zest_dai,
 
 	/* If you want to use sec_fifo device,
-	 * changes the num_link = 2 or ARRAY_SIZE(t0_dai). */
-	.num_links = ARRAY_SIZE(t0_dai),
+	 * changes the num_link = 2 or ARRAY_SIZE(zest_dai). */
+	.num_links = ARRAY_SIZE(zest_dai),
 
-	.suspend_pre = t0_card_suspend_pre,
-	.suspend_post = t0_card_suspend_post,
-	.resume_pre = t0_card_resume_pre,
-	.resume_post = t0_card_resume_post
+	.suspend_pre = zest_card_suspend_pre,
+	.suspend_post = zest_card_suspend_post,
+	.resume_pre = zest_card_resume_pre,
+	.resume_post = zest_card_resume_post
 };
 
-static void t0_jackdet_set_mode(struct snd_soc_codec *codec, u16 mode)
+static void zest_jackdet_set_mode(struct snd_soc_codec *codec, u16 mode)
 {
 	struct wm8994_priv *wm8994 = snd_soc_codec_get_drvdata(codec);
 
@@ -1577,7 +1580,7 @@ static void t0_jackdet_set_mode(struct snd_soc_codec *codec, u16 mode)
 			    WM1811_JACKDET_MODE_MASK, mode);
 }
 
-static irqreturn_t t0_g_det_thread(int irq, void *data)
+static irqreturn_t zest_g_det_thread(int irq, void *data)
 {
 	struct wm1811_machine_priv *wm1811 = data;
 	struct wm8994_priv *wm8994 = snd_soc_codec_get_drvdata(wm1811->codec);
@@ -1603,7 +1606,7 @@ static irqreturn_t t0_g_det_thread(int irq, void *data)
 		snd_soc_update_bits(codec, WM8958_MIC_DETECT_1,
 					    WM8958_MICD_ENA, 0);
 
-		t0_jackdet_set_mode(codec, WM1811_JACKDET_MODE_JACK);
+		zest_jackdet_set_mode(codec, WM1811_JACKDET_MODE_JACK);
 
 		mutex_unlock(&wm8994->accdet_lock);
 
@@ -1629,7 +1632,7 @@ static irqreturn_t t0_g_det_thread(int irq, void *data)
 
 }
 
-static int __init t0_audio_init(void)
+static int __init zest_audio_init(void)
 {
 	struct wm1811_machine_priv *wm1811;
 	const struct exynos_sound_platform_data *sound_pdata;
@@ -1641,24 +1644,24 @@ static int __init t0_audio_init(void)
 		ret = -ENOMEM;
 		goto err_kzalloc;
 	}
-	snd_soc_card_set_drvdata(&t0_card, wm1811);
+	snd_soc_card_set_drvdata(&zest_card, wm1811);
 
-	t0_snd_device = platform_device_alloc("soc-audio", -1);
-	if (!t0_snd_device) {
+	zest_snd_device = platform_device_alloc("soc-audio", -1);
+	if (!zest_snd_device) {
 		ret = -ENOMEM;
 		goto err_device_alloc;
 	}
 
-	ret = snd_soc_register_dais(&t0_snd_device->dev, t0_ext_dai,
-						ARRAY_SIZE(t0_ext_dai));
+	ret = snd_soc_register_dais(&zest_snd_device->dev, zest_ext_dai,
+						ARRAY_SIZE(zest_ext_dai));
 	if (ret != 0)
 		pr_err("Failed to register external DAIs: %d\n", ret);
 
-	platform_set_drvdata(t0_snd_device, &t0_card);
+	platform_set_drvdata(zest_snd_device, &zest_card);
 
-	ret = platform_device_add(t0_snd_device);
+	ret = platform_device_add(zest_snd_device);
 	if (ret)
-		platform_device_put(t0_snd_device);
+		platform_device_put(zest_snd_device);
 
 	sound_pdata = exynos_sound_get_platform_data();
 	if (!sound_pdata) {
@@ -1691,7 +1694,7 @@ static int __init t0_audio_init(void)
 		wm1811->get_g_det_irq_num_f =
 				sound_pdata->get_ground_det_irq_num;
 		ret = request_threaded_irq(wm1811->get_g_det_irq_num_f(), NULL,
-					t0_g_det_thread, IRQF_TRIGGER_RISING |
+					zest_g_det_thread, IRQF_TRIGGER_RISING |
 					IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
 					"g_det irq", wm1811);
 		if (ret != 0)
@@ -1706,27 +1709,27 @@ static int __init t0_audio_init(void)
 	return ret;
 
 err_out_free:
-	platform_device_put(t0_snd_device);
+	platform_device_put(zest_snd_device);
 err_device_alloc:
 	kfree(wm1811);
 err_kzalloc:
 	return ret;
 }
-module_init(t0_audio_init);
+module_init(zest_audio_init);
 
-static void __exit t0_audio_exit(void)
+static void __exit zest_audio_exit(void)
 {
-	struct snd_soc_card *card = &t0_card;
+	struct snd_soc_card *card = &zest_card;
 	struct wm1811_machine_priv *wm1811 = snd_soc_card_get_drvdata(card);
 
 #ifdef CONFIG_USE_ADC_DET
 	s3c_adc_release(wm1811->padc);
 #endif
-	platform_device_unregister(t0_snd_device);
+	platform_device_unregister(zest_snd_device);
 	kfree(wm1811);
 }
-module_exit(t0_audio_exit);
+module_exit(zest_audio_exit);
 
-MODULE_AUTHOR("Uk Kim <w0806.kim@samsung.com>");
-MODULE_DESCRIPTION("ALSA SoC T0 WM1811");
+MODULE_AUTHOR("MIN LEE <min47.lee@samsung.com>");
+MODULE_DESCRIPTION("ALSA SoC ZEST WM1811");
 MODULE_LICENSE("GPL");
