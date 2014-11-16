@@ -3137,18 +3137,6 @@ dhd_open(struct net_device *net)
 	}
 #endif /* CUSTOMER_HW4 */
 
-#if defined(CUSTOMER_HW4) && defined(SUPPORT_MULTIPLE_REVISION)
-	/* dhd_open() can be call several times when loading failed */
-	if (strlen(firmware_path) != 0) {
-		ret = concate_revision(dhd->pub.bus, fw_path, MOD_PARAM_PATHLEN,
-			nv_path, MOD_PARAM_PATHLEN);
-		if (ret != 0) {
-			DHD_ERROR(("%s: fail to concatnate revison \n", __FUNCTION__));
-			goto exit;
-		}
-	}
-#endif /* CUSTOMER_HW4 && SUPPORT_MULTIPLE_REVISION */
-
 	dhd->pub.dongle_trap_occured = 0;
 	dhd->pub.hang_was_sent = 0;
 #if !defined(WL_CFG80211)
@@ -3432,15 +3420,6 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 		bzero(nv_path, MOD_PARAM_PATHLEN);
 		strncpy(nv_path, nvram_path, sizeof(nv_path) -1);
 	}
-#if defined(CUSTOMER_HW4) && defined(SUPPORT_MULTIPLE_REVISION)
-	if (strlen(fw_path) != 0 &&
-		concate_revision(bus, fw_path, MOD_PARAM_PATHLEN,
-		nv_path, MOD_PARAM_PATHLEN) != 0) {
-		DHD_ERROR(("%s: fail to concatnate revison \n", __FUNCTION__));
-		goto fail;
-	}
-#endif /* CUSTOMER_HW4 && SUPPORT_MULTIPLE_REVISION */
-
 	/* Allocate etherdev, including space for private structure */
 	if (!(net = alloc_etherdev(sizeof(dhd)))) {
 		DHD_ERROR(("%s: OOM - alloc_etherdev\n", __FUNCTION__));

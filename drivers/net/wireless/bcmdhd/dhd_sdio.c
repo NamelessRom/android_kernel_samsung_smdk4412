@@ -8503,6 +8503,17 @@ _dhdsdio_download_firmware(struct dhd_bus *bus)
 #endif
 	}
 
+#if defined(CUSTOMER_HW4) && defined(SUPPORT_MULTIPLE_REVISION)
+	if (strlen(bus->fw_path) != 0) {
+		bcmerror = concate_revision(bus->dhd->bus, bus->fw_path, MOD_PARAM_PATHLEN,
+			bus->nv_path, MOD_PARAM_PATHLEN);
+		if (bcmerror != 0) {
+			DHD_ERROR(("%s: fail to concatnate revison \n", __FUNCTION__));
+			goto err;
+		}
+	}
+#endif /* CUSTOMER_HW4 && SUPPORT_MULTIPLE_REVISION */
+
 	/* Keep arm in reset */
 	if (dhdsdio_download_state(bus, TRUE)) {
 		DHD_ERROR(("%s: error placing ARM core in reset\n", __FUNCTION__));
