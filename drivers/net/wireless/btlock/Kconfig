@@ -1,5 +1,5 @@
 config BCM4334
 	tristate "Bluetooth Lock driver"
-	default m
+	default n
 	help
 	  say M to compile it as module.
