@@ -2903,11 +2903,7 @@ dhd_prot_init(dhd_pub_t *dhd)
 	if (ret < 0)
 		goto done;
 
-
-#if defined(WL_CFG80211)
-	if (dhd_download_fw_on_driverload)
-#endif /* defined(WL_CFG80211) */
-		ret = dhd_preinit_ioctls(dhd);
+	ret = dhd_preinit_ioctls(dhd);
 
 #ifdef PROP_TXSTATUS
 	ret = dhd_wlfc_init(dhd);
