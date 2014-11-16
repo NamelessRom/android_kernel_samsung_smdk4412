@@ -150,6 +150,7 @@ ifneq ($(CONFIG_BCM4334),)
   DHDCFLAGS += -DWES_SUPPORT
   DHDCFLAGS += -DUSE_WL_FRAMEBURST
   DHDCFLAGS :=$(filter-out -DWL_CFG80211_GON_COLLISION,$(DHDCFLAGS))
+  DHDCFLAGS += -DENABLE_INSMOD_NO_FW_LOAD
 endif
 
 ifneq ($(CONFIG_BCM4330),)
@@ -249,17 +250,5 @@ DHDOFILES :=$(filter-out bcmsdh_sdmmc.o,$(DHDOFILES))
 DHDOFILES :=$(filter-out bcmsdh_sdmmc_linux.o,$(DHDOFILES))
 endif
 
-dhd-y := $(DHDOFILES)
-obj-m   += dhd.o
-
-all:
-	@echo "$(MAKE) --no-print-directory -C $(KDIR) SUBDIRS=$(CURDIR) modules"
-	@$(MAKE) --no-print-directory -C $(KDIR) SUBDIRS=$(CURDIR) modules
-
-clean:
-	rm -rf *.o *.ko *.mod.c *~ .*.cmd *.o.cmd .*.o.cmd \
-	Module.symvers modules.order .tmp_versions modules.builtin
-
-install:
-	@$(MAKE) --no-print-directory -C $(KDIR) \
-		SUBDIRS=$(CURDIR) modules_install
+obj-y += bcmdhd.o
+bcmdhd-objs += $(DHDOFILES)
