@@ -2,9 +2,9 @@
  * Generic Broadcom Home Networking Division (HND) DMA engine HW interface
  * This supports the following chips: BCM42xx, 44xx, 47xx .
  *
- * Copyright (C) 1999-2012, Broadcom Corporation
+ * Copyright (C) 1999-2011, Broadcom Corporation
  * 
- *      Unless you and Broadcom execute a separate written software license
+ *         Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
  * under the terms of the GNU General Public License version 2 (the "GPL"),
  * available at http://www.broadcom.com/licenses/GPLv2.php, with the
@@ -22,8 +22,9 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: sbhnddma.h 348178 2012-07-31 22:27:41Z $
+ * $Id: sbhnddma.h 278779 2011-08-19 22:07:18Z $
  */
+
 
 #ifndef	_sbhnddma_h_
 #define	_sbhnddma_h_
@@ -71,44 +72,11 @@ typedef volatile struct {
 #define	XC_SE		((uint32)1 << 1)	
 #define	XC_LE		((uint32)1 << 2)	
 #define	XC_FL		((uint32)1 << 4)	
-#define XC_MR_MASK	0x000000C0		
-#define XC_MR_SHIFT	6
 #define	XC_PD		((uint32)1 << 11)	
 #define	XC_AE		((uint32)3 << 16)	
 #define	XC_AE_SHIFT	16
-#define XC_BL_MASK	0x001C0000		
+#define XC_BL_MASK	0x001C0000			
 #define XC_BL_SHIFT	18
-#define XC_PC_MASK	0x00E00000		
-#define XC_PC_SHIFT	21
-#define XC_PT_MASK	0x03000000		
-#define XC_PT_SHIFT	24
-
-
-#define DMA_MR_1	0
-#define DMA_MR_2	1
-
-
-
-#define DMA_BL_16	0
-#define DMA_BL_32	1
-#define DMA_BL_64	2
-#define DMA_BL_128	3
-#define DMA_BL_256	4
-#define DMA_BL_512	5
-#define DMA_BL_1024	6
-
-
-#define DMA_PC_0	0
-#define DMA_PC_4	1
-#define DMA_PC_8	2
-#define DMA_PC_16	3
-
-
-
-#define DMA_PT_1	0
-#define DMA_PT_2	1
-#define DMA_PT_4	2
-#define DMA_PT_8	3
 
 
 #define	XP_LD_MASK	0xfff			
@@ -142,12 +110,8 @@ typedef volatile struct {
 #define	RC_PD		((uint32)1 << 11)	
 #define	RC_AE		((uint32)3 << 16)	
 #define	RC_AE_SHIFT	16
-#define RC_BL_MASK	0x001C0000		
+#define RC_BL_MASK	0x001C0000			
 #define RC_BL_SHIFT	18
-#define RC_PC_MASK	0x00E00000		
-#define RC_PC_SHIFT	21
-#define RC_PT_MASK	0x03000000		
-#define RC_PT_SHIFT	24
 
 
 #define	RP_LD_MASK	0xfff			
@@ -233,38 +197,30 @@ typedef volatile struct {
 
 #define D64RINGALIGN_BITS	13
 #define	D64MAXRINGSZ		(1 << D64RINGALIGN_BITS)
-#define	D64RINGBOUNDARY		(1 << D64RINGALIGN_BITS)
+#define	D64RINGALIGN		(1 << D64RINGALIGN_BITS)
 
 #define	D64MAXDD	(D64MAXRINGSZ / sizeof (dma64dd_t))
 
 
-#define	D64MAXDD_LARGE		((1 << 16) / sizeof (dma64dd_t))
-
-
-#define	D64RINGBOUNDARY_LARGE	(1 << 16)
+#define D64_DEF_USBBURSTLEN		2
+#define D64_DEF_SDIOBURSTLEN	1
 
 
 #define	D64_XC_XE		0x00000001	
 #define	D64_XC_SE		0x00000002	
 #define	D64_XC_LE		0x00000004	
 #define	D64_XC_FL		0x00000010	
-#define D64_XC_MR_MASK		0x000000C0	
-#define D64_XC_MR_SHIFT		6
 #define	D64_XC_PD		0x00000800	
 #define	D64_XC_AE		0x00030000	
 #define	D64_XC_AE_SHIFT		16
-#define D64_XC_BL_MASK		0x001C0000	
+#define D64_XC_BL_MASK	0x001C0000	
 #define D64_XC_BL_SHIFT		18
-#define D64_XC_PC_MASK		0x00E00000		
-#define D64_XC_PC_SHIFT		21
-#define D64_XC_PT_MASK		0x03000000		
-#define D64_XC_PT_SHIFT		24
 
 
 #define	D64_XP_LD_MASK		0x00001fff	
 
 
-#define	D64_XS0_CD_MASK		(di->d64_xs0_cd_mask)	
+#define	D64_XS0_CD_MASK		0x00001fff	
 #define	D64_XS0_XS_MASK		0xf0000000     	
 #define	D64_XS0_XS_SHIFT		28
 #define	D64_XS0_XS_DISABLED	0x00000000	
@@ -273,7 +229,7 @@ typedef volatile struct {
 #define	D64_XS0_XS_STOPPED	0x30000000	
 #define	D64_XS0_XS_SUSP		0x40000000	
 
-#define	D64_XS1_AD_MASK		(di->d64_xs1_ad_mask)	
+#define	D64_XS1_AD_MASK		0x00001fff	
 #define	D64_XS1_XE_MASK		0xf0000000     	
 #define	D64_XS1_XE_SHIFT		28
 #define	D64_XS1_XE_NOERR	0x00000000	
@@ -293,12 +249,8 @@ typedef volatile struct {
 #define	D64_RC_PD		0x00000800	
 #define	D64_RC_AE		0x00030000	
 #define	D64_RC_AE_SHIFT		16
-#define D64_RC_BL_MASK		0x001C0000	
+#define D64_RC_BL_MASK	0x001C0000	
 #define D64_RC_BL_SHIFT		18
-#define D64_RC_PC_MASK		0x00E00000	
-#define D64_RC_PC_SHIFT		21
-#define D64_RC_PT_MASK		0x03000000	
-#define D64_RC_PT_SHIFT		24
 
 
 #define DMA_CTRL_PEN		(1 << 0)	
@@ -306,13 +258,12 @@ typedef volatile struct {
 #define DMA_CTRL_RXMULTI	(1 << 2)	
 #define DMA_CTRL_UNFRAMED	(1 << 3)	
 #define DMA_CTRL_USB_BOUNDRY4KB_WAR (1 << 4)
-#define DMA_CTRL_DMA_AVOIDANCE_WAR (1 << 5)	
 
 
 #define	D64_RP_LD_MASK		0x00001fff	
 
 
-#define	D64_RS0_CD_MASK		(di->d64_rs0_cd_mask)	
+#define	D64_RS0_CD_MASK		0x00001fff	
 #define	D64_RS0_RS_MASK		0xf0000000     	
 #define	D64_RS0_RS_SHIFT		28
 #define	D64_RS0_RS_DISABLED	0x00000000	
