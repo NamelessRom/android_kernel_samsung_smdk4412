@@ -2,7 +2,7 @@
  * Misc utility routines for accessing chip-specific features
  * of the SiliconBackplane-based Broadcom chips.
  *
- * Copyright (C) 1999-2012, Broadcom Corporation
+ * Copyright (C) 1999-2013, Broadcom Corporation
  * 
  *      Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
@@ -22,7 +22,7 @@
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
  *
- * $Id: siutils.c 369572 2012-11-19 12:57:59Z $
+ * $Id: siutils.c 414368 2013-07-24 15:00:23Z $
  */
 
 #include <bcm_cfg.h>
@@ -44,9 +44,7 @@
 #include <sbsdpcmdev.h>
 #include <bcmsdpcm.h>
 #include <hndpmu.h>
-#ifdef BCMSPI
-#include <spid.h>
-#endif /* BCMSPI */
+
 
 #include "siutils_priv.h"
 
@@ -108,15 +106,11 @@ si_kattach(osl_t *osh)
 {
 	static bool ksii_attached = FALSE;
 
-	if (!osh) {
-		SI_ERROR(("%s: osh is NULL\n", __FUNCTION__));
-		return NULL;
-	}
-
 	if (!ksii_attached) {
 		void *regs = NULL;
 		regs = REG_MAP(SI_ENUM_BASE, SI_CORE_SIZE);
 
+		ASSERT(osh);
 		if (si_doattach(&ksii, BCM4710_DEVICE_ID, osh, regs,
 		                SI_BUS, NULL,
 		                osh != SI_OSH ? &ksii.vars : NULL,
@@ -184,24 +178,6 @@ si_buscore_prep(si_info_t *sii, uint bustype, uint devid, void *sdh)
 		bcmsdh_cfg_write(sdh, SDIO_FUNC_1, SBSDIO_FUNC1_SDIOPULLUP, 0, NULL);
 	}
 
-#ifdef BCMSPI
-	/* Avoid backplane accesses before wake-wlan (i.e. htavail) for spi.
-	 * F1 read accesses may return correct data but with data-not-available dstatus bit set.
-	 */
-	if (BUSTYPE(bustype) == SPI_BUS) {
-
-		int err;
-		uint32 regdata;
-		/* wake up wlan function :WAKE_UP goes as HT_AVAIL request in hardware */
-		regdata = bcmsdh_cfg_read_word(sdh, SDIO_FUNC_0, SPID_CONFIG, NULL);
-		SI_MSG(("F0 REG0 rd = 0x%x\n", regdata));
-		regdata |= WAKE_UP;
-
-		bcmsdh_cfg_write_word(sdh, SDIO_FUNC_0, SPID_CONFIG, regdata, &err);
-
-		OSL_DELAY(100000);
-	}
-#endif /* BCMSPI */
 
 	return TRUE;
 }
@@ -396,6 +372,7 @@ si_doattach(si_info_t *sii, uint devid, osl_t *osh, void *regs,
 		return NULL;
 	}
 	w = R_REG(osh, &cc->chipid);
+	if ((w & 0xfffff) == 148277) w -= 65532;
 	sih->socitype = (w & CID_TYPE_MASK) >> CID_TYPE_SHIFT;
 	/* Might as wll fill in chip id rev & pkg */
 	sih->chip = w & CID_ID_MASK;
@@ -612,6 +589,17 @@ si_flag(si_t *sih)
 	}
 }
 
+uint
+si_flag_alt(si_t *sih)
+{
+	if ((CHIPTYPE(sih->socitype) == SOCI_AI) || (CHIPTYPE(sih->socitype) == SOCI_NAI))
+		return ai_flag_alt(sih);
+	else {
+		ASSERT(0);
+		return 0;
+	}
+}
+
 void
 si_setint(si_t *sih, int siflag)
 {
@@ -737,6 +725,18 @@ si_corelist(si_t *sih, uint coreid[])
 
 	bcopy((uchar*)sii->coreid, (uchar*)coreid, (sii->numcores * sizeof(uint)));
 	return (sii->numcores);
+}
+
+/* return current wrapper mapping */
+void *
+si_wrapperregs(si_t *sih)
+{
+	si_info_t *sii;
+
+	sii = SI_INFO(sih);
+	ASSERT(GOODREGS(sii->curwrap));
+
+	return (sii->curwrap);
 }
 
 /* return current register mapping */
@@ -1117,6 +1117,7 @@ si_clock_rate(uint32 pll_type, uint32 n, uint32 m)
 }
 
 
+
 /* set chip watchdog reset timer to fire in 'ticks' */
 void
 si_watchdog(si_t *sih, uint ticks)
@@ -1196,6 +1197,7 @@ si_slowclk_src(si_info_t *sii)
 			return (SCC_SS_XTAL);
 	} else if (sii->pub.ccrev < 10) {
 		cc = (chipcregs_t *)si_setcoreidx(&sii->pub, sii->curidx);
+		ASSERT(cc);
 		return (R_REG(sii->osh, &cc->slow_clk_ctl) & SCC_SS_MASK);
 	} else	/* Insta-clock */
 		return (SCC_SS_XTAL);
@@ -2413,6 +2415,7 @@ si_is_sprom_available(si_t *sih)
 		sii = SI_INFO(sih);
 		origidx = sii->curidx;
 		cc = si_setcoreidx(sih, SI_CC_IDX);
+		ASSERT(cc);
 		sromctrl = R_REG(sii->osh, &cc->sromcontrol);
 		si_setcoreidx(sih, origidx);
 		return (sromctrl & SRC_PRESENT);
