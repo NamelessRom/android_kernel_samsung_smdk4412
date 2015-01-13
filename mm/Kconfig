@@ -429,17 +429,6 @@ config ZSWAP
 	  swap devices resulting in reduced I/O and faster performance
 	  for many workloads.
 
-config ZSWAP_PSEUDO_BLKDEV
-	bool "Emulate a pseudo blk-dev based on zswap(previous zram)"
-	depends on ZSWAP && ZSMALLOC
-	default n
-	help
-	  Enable this option will emulate a pseudo block swapdev /dev/zram0
-	  with size zswap.max_pool_percent of total ram size. All writes to this
-	  block device will be compressed and cached by zswap as a result no
-	  real IO disk operations will happen.
-	  This feature can be used to replace drivers/staging/zram.
-
 config ZBUD
 	tristate
 	default n
