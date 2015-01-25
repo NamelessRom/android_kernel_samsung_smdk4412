@@ -46,6 +46,9 @@
 #endif
 #include <linux/i2c/touchkey_i2c.h>
 
+#define TOUCHKEY_LED_DISABLED  0
+#define TOUCHKEY_LED_ENABLED   1
+
 /* M0 Touchkey temporary setting */
 
 #if defined(CONFIG_MACH_M0) || defined(CONFIG_MACH_M3)
@@ -82,6 +85,8 @@ static int touchkey_keycode[] = { 0,
 #endif
 };
 static const int touchkey_count = sizeof(touchkey_keycode) / sizeof(int);
+int touch_led_on_screen_touch  = TOUCHKEY_LED_ENABLED;
+int touchkey_pressed = 0;
 
 #if defined(TK_HAS_AUTOCAL)
 static u16 raw_data0;
@@ -711,6 +716,7 @@ static int touchkey_firmware_update(struct touchkey_i2c *tkey_i2c)
 static irqreturn_t touchkey_interrupt(int irq, void *dev_id)
 {
 	struct touchkey_i2c *tkey_i2c = dev_id;
+    static const int ledCmd[] = {TK_CMD_LED_ON, TK_CMD_LED_OFF};
 #if defined(READ_MEM_SENSITIVITY)
 	u8 data[14];
 #else
@@ -774,8 +780,15 @@ static irqreturn_t touchkey_interrupt(int irq, void *dev_id)
 		return IRQ_HANDLED;
 	}
 
-	if (pressed)
+	if (pressed) {
 		set_touchkey_debug('P');
+		touchkey_pressed = 1;
+		if (touch_led_on_screen_touch == TOUCHKEY_LED_DISABLED) {
+			pr_debug("[Touchkey] %s: enabling touchled\n", __func__);
+			i2c_touchkey_write(tkey_i2c->client, (u8 *) &ledCmd[0], 1);
+			touchkey_led_status = TK_CMD_LED_ON;
+		}
+	}
 
 #if defined(READ_MEM_SENSITIVITY)
 	if ((touch_sensitivity_mode == 1) && pressed) {
@@ -1007,9 +1020,12 @@ static int sec_touchkey_late_resume(struct early_suspend *h)
 
 	if (touchled_cmd_reversed) {
 		touchled_cmd_reversed = 0;
+		if (touch_led_on_screen_touch == TOUCHKEY_LED_DISABLED) {
+			touchkey_led_status = TK_CMD_LED_OFF;
+		}
 		i2c_touchkey_write(tkey_i2c->client,
 			(u8 *) &touchkey_led_status, 1);
-		printk(KERN_DEBUG "[Touchkey] LED returned on\n");
+		printk(KERN_DEBUG "[Touchkey] LED returned to desired state\n");
 	}
 #ifdef TEST_JIG_MODE
 	i2c_touchkey_write(tkey_i2c->client, &get_touch, 1);
@@ -1181,14 +1197,19 @@ static ssize_t touchkey_led_control(struct device *dev,
 			__func__, data);
 		return size;
 	}
+	if (data == 2)
+		touchkey_pressed = 0;
 
+	if (touch_led_on_screen_touch == TOUCHKEY_LED_DISABLED && touchkey_pressed == 0) {
+		data = TK_CMD_LED_OFF;
+	} else {
 #if defined(CONFIG_TARGET_LOCALE_NA)
-	if (tkey_i2c->module_ver >= 8)
+	    if (tkey_i2c->module_ver >= 8)
 		data = ledCmd[data-1];
 #else
-	data = ledCmd[data-1];
+		data = ledCmd[data-1];
 #endif
-
+	}
 	ret = i2c_touchkey_write(tkey_i2c->client, (u8 *) &data, 1);
 
 	if (ret == -ENODEV)
@@ -1404,6 +1425,33 @@ static ssize_t touchkey_back_show(struct device *dev,
 }
 #endif
 
+static ssize_t touch_led_on_screen_touch_show(struct device *dev,
+					      struct device_attribute *attr, char *buf)
+{
+	switch (touch_led_on_screen_touch) {
+	  case TOUCHKEY_LED_DISABLED:	return sprintf(buf, "%d : H/W key won't light up on touchscreen touch\n", touch_led_on_screen_touch);
+	  case TOUCHKEY_LED_ENABLED:	return sprintf(buf, "%d : H/W key will light up on touchscreen touch\n", touch_led_on_screen_touch);
+	  default:			return sprintf(buf, "%d : value out of range\n", touch_led_on_screen_touch);
+	}
+
+}
+
+static ssize_t touch_led_on_screen_touch_store(struct device *dev,
+					       struct device_attribute *attr, const char *buf, size_t count)
+{
+	int new_touch_led_on_screen_touch;
+
+	sscanf(buf, "%du", &new_touch_led_on_screen_touch);
+
+	switch (new_touch_led_on_screen_touch) {
+	  case TOUCHKEY_LED_DISABLED:
+	  case TOUCHKEY_LED_ENABLED:	touch_led_on_screen_touch = new_touch_led_on_screen_touch;
+					return count;
+	  default:			return -EINVAL;
+	}
+
+}
+
 #if defined(TK_HAS_AUTOCAL)
 static ssize_t autocalibration_enable(struct device *dev,
 				      struct device_attribute *attr,
@@ -1561,6 +1609,8 @@ static DEVICE_ATTR(touchkey_menu, S_IRUGO | S_IWUSR | S_IWGRP,
 		   touchkey_menu_show, NULL);
 static DEVICE_ATTR(touchkey_back, S_IRUGO | S_IWUSR | S_IWGRP,
 		   touchkey_back_show, NULL);
+static DEVICE_ATTR(touch_led_on_screen_touch, S_IRUGO | S_IWUSR | S_IWGRP,
+		   touch_led_on_screen_touch_show, touch_led_on_screen_touch_store);
 
 #if defined(TK_USE_4KEY)
 static DEVICE_ATTR(touchkey_home, S_IRUGO, touchkey_home_show, NULL);
@@ -1609,6 +1659,7 @@ static struct attribute *touchkey_attributes[] = {
 	&dev_attr_brightness.attr,
 	&dev_attr_touchkey_menu.attr,
 	&dev_attr_touchkey_back.attr,
+	&dev_attr_touch_led_on_screen_touch.attr,
 #if defined(TK_USE_4KEY)
 	&dev_attr_touchkey_home.attr,
 	&dev_attr_touchkey_search.attr,
