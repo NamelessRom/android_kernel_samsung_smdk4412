@@ -96,11 +96,19 @@ try-run = $(shell set -e;		\
 as-option = $(call try-run,\
 	$(CC) $(KBUILD_CFLAGS) $(1) -c -xassembler /dev/null -o "$$TMP",$(1),$(2))
 
+# Detect /bin/echo executable
+HOST_OS := $(shell uname -s)
+ifeq ($(HOST_OS),Darwin)
+  BIN_ECHO := printf "%s\n"
+else
+  BIN_ECHO := /bin/echo -e
+endif
+
 # as-instr
 # Usage: cflags-y += $(call as-instr,instr,option1,option2)
 
 as-instr = $(call try-run,\
-	/bin/echo -e "$(1)" | $(CC) $(KBUILD_AFLAGS) -c -xassembler -o "$$TMP" -,$(2),$(3))
+	$(BIN_ECHO) "$(1)" | $(CC) $(KBUILD_AFLAGS) -c -xassembler -o "$$TMP" -,$(2),$(3))
 
 # cc-option
 # Usage: cflags-y += $(call cc-option,-march=winchip-c6,-march=i586)
