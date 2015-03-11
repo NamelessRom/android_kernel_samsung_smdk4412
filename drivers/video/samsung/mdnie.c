@@ -196,7 +196,7 @@ void set_mdnie_value(struct mdnie_info *mdnie, u8 force)
 		mdnie->tone = idx;
 
 		mdnie_send_sequence(mdnie, tune_dmb[mdnie->mode].sequence);
-		dev_info(mdnie->dev, "mode=%d, scenario=%d, outdoor=%d, cabc=%d, %s\n",
+		dev_dbg(mdnie->dev, "mode=%d, scenario=%d, outdoor=%d, cabc=%d, %s\n",
 			mdnie->mode, mdnie->scenario, mdnie->outdoor,
 			mdnie->cabc, tune_dmb[mdnie->mode].name);
 		goto etc;
@@ -206,14 +206,14 @@ void set_mdnie_value(struct mdnie_info *mdnie, u8 force)
 	if (SCENARIO_IS_COLOR(mdnie->scenario)) {
 		idx = mdnie->scenario - COLOR_TONE_1;
 		mdnie_send_sequence(mdnie, color_tone_table[idx].sequence);
-		dev_info(mdnie->dev, "mode=%d, scenario=%d, outdoor=%d, cabc=%d, %s\n",
+		dev_dbg(mdnie->dev, "mode=%d, scenario=%d, outdoor=%d, cabc=%d, %s\n",
 			mdnie->mode, mdnie->scenario, mdnie->outdoor, mdnie->cabc,
 			color_tone_table[idx].name);
 
 		goto exit;
 	} else {
 		mdnie_send_sequence(mdnie, tuning_table[mdnie->cabc][mdnie->mode][mdnie->scenario].sequence);
-		dev_info(mdnie->dev, "mode=%d, scenario=%d, outdoor=%d, cabc=%d, %s\n",
+		dev_dbg(mdnie->dev, "mode=%d, scenario=%d, outdoor=%d, cabc=%d, %s\n",
 			mdnie->mode, mdnie->scenario, mdnie->outdoor, mdnie->cabc,
 			tuning_table[mdnie->cabc][mdnie->mode][mdnie->scenario].name);
 	}
