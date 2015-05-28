@@ -41,10 +41,10 @@
 #include <linux/pm_runtime.h>
 #endif
 
-#if defined(CONFIG_MACH_GC1) || defined(CONFIG_MACH_GC2PD) || defined(CONFIG_MACH_GD2)
+#if defined(CONFIG_MACH_GC2PD) || defined(CONFIG_MACH_GD2)
 #define FIMC_FRAME_START_END_IRQ_ENABLE
 #endif
-#include <asm/uaccess.h>
+
 #define FIMC_NAME		"s3c-fimc"
 #define FIMC_CMA_NAME		"fimc"
 
@@ -536,7 +536,7 @@ struct fimc_prv_data {
 };
 
 /* debug macro */
-#define FIMC_LOG_DEFAULT	(FIMC_LOG_WARN | FIMC_LOG_ERR)
+#define FIMC_LOG_DEFAULT	(FIMC_LOG_WARN | FIMC_LOG_ERR | FIMC_LOG_DEBUG | FIMC_LOG_INFO_L2 | FIMC_LOG_INFO_L1)
 
 #define FIMC_DEBUG(fmt, ...)						\
 	do {								\

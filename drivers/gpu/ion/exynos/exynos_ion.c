@@ -115,6 +115,7 @@ static int ion_exynos_heap_allocate(struct ion_heap *heap,
 	struct scatterlist *sgl;
 	struct sg_table *sgtable;
 
+	printk(KERN_INFO "[ION] %s flags=0x%x", __func__, flags);
 	while (size && *cur_order) {
 		struct page *page;
 
@@ -281,6 +282,7 @@ static void ion_exynos_heap_free(struct ion_buffer *buffer)
 static struct scatterlist *ion_exynos_heap_map_dma(struct ion_heap *heap,
 					    struct ion_buffer *buffer)
 {
+	printk(KERN_INFO "[ION] %s", __func__);
 	return ((struct sg_table *)buffer->priv_virt)->sgl;
 }
 
@@ -298,6 +300,7 @@ static void *ion_exynos_heap_map_kernel(struct ion_heap *heap,
 	int num_pages, i;
 	void *vaddr;
 
+	printk(KERN_INFO "[ION] %s", __func__);
 	sgt = buffer->priv_virt;
 	num_pages = PAGE_ALIGN(offset_in_page(sg_phys(sgt->sgl)) + buffer->size)
 								>> PAGE_SHIFT;
@@ -341,6 +344,8 @@ static int ion_exynos_heap_map_user(struct ion_heap *heap,
 	int i;
 	unsigned long start;
 	int map_pages;
+
+	printk(KERN_INFO "[ION] %s", __func__);
 
 	if (buffer->kmap_cnt)
 		return remap_vmalloc_range(vma, buffer->vaddr, vma->vm_pgoff);
@@ -415,6 +420,8 @@ static int ion_exynos_contig_heap_allocate(struct ion_heap *heap,
 					   unsigned long flags)
 {
 	buffer->priv_phys = cma_alloc(exynos_ion_dev, NULL, len, align);
+
+	printk(KERN_INFO "[ION] %s flags=0x%x", __func__, flags);
 
 #ifdef CONFIG_ION_EXYNOS_CONTIGHEAP_DEBUG
 	if (1) {
@@ -707,6 +714,8 @@ static int ion_exynos_user_heap_allocate(struct ion_heap *heap,
 	struct exynos_user_heap_data *privdata = NULL;
 	struct scatterlist *sgl;
 
+	printk(KERN_INFO "[ION] %s flags=0x%x", __func__, flags);
+
 	last_size = (start + len) & ~PAGE_MASK;
 	if (last_size == 0)
 		last_size = PAGE_SIZE;
@@ -996,11 +1005,14 @@ static long exynos_heap_ioctl(struct ion_client *client, unsigned int cmd,
 		struct ion_msync_data data;
 		struct ion_handle *handle;
 
+		printk(KERN_INFO "[ION] %s 0x%08x(ION_EXYNOS_CUSTOM_MSYNC) arg=0x%08x", __func__, arg);
 		if (copy_from_user(&data, (void __user *)arg, sizeof(data)))
 			return -EFAULT;
 
 		if ((data.offset + data.size) < data.offset)
 			return -EINVAL;
+
+		printk(KERN_ERR "[ION] %s: ION_EXYNOS_CUSTOM_MSYNC (%d bytes offset %d bytes size) dir = 0x%x\n", __func__, (int) data.offset, (int) data.size, (int) data.dir);
 
 		handle = ion_import_fd(client, data.fd_buffer);
 		if (IS_ERR(handle))
@@ -1021,6 +1033,8 @@ static long exynos_heap_ioctl(struct ion_client *client, unsigned int cmd,
 			return -EFAULT;
 		}
 
+		printk(KERN_INFO "[ION] %s (ION_EXYNOS_CUSTOM_PHYS) arg=0x%08x fd_buffer=%d phys=0x%08x size=0x%08x\n", __func__, arg, data.fd_buffer, data.phys, data.size);
+
 		handle = ion_import_fd(client, data.fd_buffer);
 
 		if (IS_ERR(handle))
@@ -1029,6 +1043,8 @@ static long exynos_heap_ioctl(struct ion_client *client, unsigned int cmd,
 		ret = ion_phys(client, handle, &data.phys, &data.size);
 		if (ret)
 			return ret;
+
+		printk(KERN_INFO "[ION] %s (ION_EXYNOS_CUSTOM_PHYS after ion_phys()) arg=0x%08x fd_buffer=%d phys=0x%08x size=0x%08x\n", __func__, arg, data.fd_buffer, data.phys, data.size);
 
 		if (copy_to_user((void __user *)arg,
 				&data, sizeof(data))) {

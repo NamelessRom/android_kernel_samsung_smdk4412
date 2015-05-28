@@ -185,6 +185,8 @@ int fimc_hwset_enable_irq(struct fimc_control *ctrl, int overflow, int level)
 {
 	u32 cfg = readl(ctrl->regs + S3C_CIGCTRL);
 
+	fimc_dbg("%s overflow=%d level=%d\n", __func__, overflow, level);
+
 	cfg &= ~(S3C_CIGCTRL_IRQ_OVFEN | S3C_CIGCTRL_IRQ_LEVEL);
 	cfg |= S3C_CIGCTRL_IRQ_ENABLE;
 
@@ -202,6 +204,8 @@ int fimc_hwset_disable_irq(struct fimc_control *ctrl)
 {
 	u32 cfg = readl(ctrl->regs + S3C_CIGCTRL);
 
+	fimc_dbg("%s\n", __func__);
+
 	cfg &= ~(S3C_CIGCTRL_IRQ_OVFEN | S3C_CIGCTRL_IRQ_ENABLE);
 	writel(cfg, ctrl->regs + S3C_CIGCTRL);
 
@@ -211,6 +215,8 @@ int fimc_hwset_disable_irq(struct fimc_control *ctrl)
 int fimc_hwset_clear_irq(struct fimc_control *ctrl)
 {
 	u32 cfg = readl(ctrl->regs + S3C_CIGCTRL);
+
+	fimc_dbg("%s\n", __func__);
 
 	cfg |= S3C_CIGCTRL_IRQ_CLR;
 
@@ -291,6 +297,8 @@ int fimc_hwset_reset(struct fimc_control *ctrl)
 {
 	u32 cfg = 0;
 
+	fimc_dbg("%s\n", __func__);
+
 	cfg = readl(ctrl->regs + S3C_CISRCFMT);
 	cfg |= S3C_CISRCFMT_ITU601_8BIT;
 	writel(cfg, ctrl->regs + S3C_CISRCFMT);
@@ -325,6 +333,8 @@ int fimc_hwset_sw_reset(struct fimc_control *ctrl)
 	u32 status;
 	int i;
 
+	//fimc_dbg("%s\n", __func__);
+
 	for (i = 0; i < 10; i++) {
 		cfg = readl(ctrl->regs + S3C_CISTATUS);
 		status = S3C_CISTATUS_GET_ENVID_STATUS(cfg);
@@ -357,6 +367,8 @@ int fimc_hwset_clksrc(struct fimc_control *ctrl, int src_clk)
 	u32 cfg = readl(ctrl->regs + S3C_MISC_FIMC);
 	cfg &= ~S3C_CLKSRC_HCLK_MASK;
 
+	//fimc_dbg("%s src_clk=%s\n", __func__, (src_clk == FIMC_HCLK)?"FIMC_HCLK":(src_clk == FIMC_SCLK)?"FIMC_SCLK":"unknown");
+
 	if (src_clk == FIMC_HCLK)
 		cfg |= S3C_CLKSRC_HCLK;
 	else if (src_clk == FIMC_SCLK)
@@ -374,7 +386,7 @@ int fimc_hwget_overflow_state(struct fimc_control *ctrl)
 	flag = S3C_CISTATUS_OVFIY | S3C_CISTATUS_OVFICB | S3C_CISTATUS_OVFICR;
 
 	if (status & flag) {
-		printk(KERN_INFO "FIMC%d overflow has occured status 0x%x\n",
+		printk(KERN_DEBUG "FIMC%d overflow has occured status 0x%x\n",
 				ctrl->id, status);
 		cfg = readl(ctrl->regs + S3C_CIWDOFST);
 		cfg |= (S3C_CIWDOFST_CLROVFIY | S3C_CIWDOFST_CLROVFICB |
@@ -386,7 +398,7 @@ int fimc_hwget_overflow_state(struct fimc_control *ctrl)
 			S3C_CIWDOFST_CLROVFICR);
 		writel(cfg, ctrl->regs + S3C_CIWDOFST);
 
-		printk(KERN_INFO "FIMC%d overflow is occured status 0x%x\n",
+		printk(KERN_DEBUG "FIMC%d overflow is occured status 0x%x\n",
 				ctrl->id, status);
 		return 1;
 	}
@@ -658,6 +670,8 @@ int fimc_hwset_camera_type(struct fimc_control *ctrl)
 {
 	struct s3c_platform_fimc *pdata = to_fimc_plat(ctrl->dev);
 
+	fimc_dbg("%s\n", __func__);
+
 	switch (pdata->hw_ver) {
 	case 0x40:
 		fimc40_hwset_camera_type(ctrl);
@@ -697,6 +711,8 @@ int fimc_hwset_output_size(struct fimc_control *ctrl, int width, int height)
 {
 	u32 cfg = readl(ctrl->regs + S3C_CITRGFMT);
 
+	//fimc_dbg("%s\n", __func__);
+
 	cfg &= ~(S3C_CITRGFMT_TARGETH_MASK | S3C_CITRGFMT_TARGETV_MASK);
 
 	cfg |= S3C_CITRGFMT_TARGETHSIZE(width);
@@ -711,6 +727,8 @@ int fimc_hwset_output_colorspace(struct fimc_control *ctrl, u32 pixelformat)
 {
 	struct s3c_platform_fimc *pdata = to_fimc_plat(ctrl->dev);
 	u32 cfg;
+
+	//fimc_dbg("%s\n", __func__);
 
 	if (pdata->hw_ver != 0x40) {
 		if (pixelformat == V4L2_PIX_FMT_YUV444) {
@@ -775,6 +793,8 @@ int fimc_hwset_output_rot_flip(struct fimc_control *ctrl, u32 rot, u32 flip)
 {
 	u32 cfg, val;
 
+	//fimc_dbg("%s\n", __func__);
+
 	cfg = readl(ctrl->regs + S3C_CITRGFMT);
 	cfg &= ~S3C_CITRGFMT_FLIP_MASK;
 	cfg &= ~S3C_CITRGFMT_OUTROT90_CLOCKWISE;
@@ -807,6 +827,7 @@ int fimc_hwset_output_area(struct fimc_control *ctrl, u32 width, u32 height)
 
 int fimc_hwset_enable_lastirq(struct fimc_control *ctrl)
 {
+	fimc_err("%s\n", __func__);
 	u32 cfg = readl(ctrl->regs + S3C_CIOCTRL);
 
 	cfg |= S3C_CIOCTRL_LASTIRQ_ENABLE;
@@ -817,6 +838,7 @@ int fimc_hwset_enable_lastirq(struct fimc_control *ctrl)
 
 int fimc_hwset_disable_lastirq(struct fimc_control *ctrl)
 {
+	fimc_err("%s\n", __func__);
 	u32 cfg = readl(ctrl->regs + S3C_CIOCTRL);
 
 	cfg &= ~S3C_CIOCTRL_LASTIRQ_ENABLE;
@@ -1302,6 +1324,8 @@ int fimc_hwset_ext_rgb(struct fimc_control *ctrl, int enable)
 
 int fimc_hwset_enable_capture(struct fimc_control *ctrl, u32 bypass)
 {
+	fimc_err("%s\n", __func__);
+
 	u32 cfg = readl(ctrl->regs + S3C_CIIMGCPT);
 	cfg &= ~S3C_CIIMGCPT_IMGCPTEN_SC;
 	cfg |= S3C_CIIMGCPT_IMGCPTEN;
@@ -1316,6 +1340,8 @@ int fimc_hwset_enable_capture(struct fimc_control *ctrl, u32 bypass)
 
 int fimc_hwset_disable_capture(struct fimc_control *ctrl)
 {
+	fimc_err("%s\n", __func__);
+
 	u32 cfg = readl(ctrl->regs + S3C_CIIMGCPT);
 
 	cfg &= ~(S3C_CIIMGCPT_IMGCPTEN_SC | S3C_CIIMGCPT_IMGCPTEN);
@@ -1333,6 +1359,7 @@ void fimc_wait_disable_capture(struct fimc_control *ctrl)
 	unsigned long timeo = jiffies + 40; /* timeout of 200 ms */
 #endif
 	u32 cfg;
+
 	if (!ctrl || !ctrl->cap)
 		return;
 	while (time_before(jiffies, timeo)) {
@@ -1557,6 +1584,8 @@ int fimc_hwset_start_input_dma(struct fimc_control *ctrl)
 	u32 cfg = readl(ctrl->regs + S3C_MSCTRL);
 	cfg |= S3C_MSCTRL_ENVID;
 
+	fimc_dbg("%s\n", __func__);
+
 	writel(cfg, ctrl->regs + S3C_MSCTRL);
 
 	return 0;
@@ -1566,6 +1595,8 @@ int fimc_hwset_stop_input_dma(struct fimc_control *ctrl)
 {
 	u32 cfg = readl(ctrl->regs + S3C_MSCTRL);
 	cfg &= ~S3C_MSCTRL_ENVID;
+
+	fimc_dbg("%s\n", __func__);
 
 	writel(cfg, ctrl->regs + S3C_MSCTRL);
 
@@ -1601,8 +1632,8 @@ int fimc40_hwset_output_offset(struct fimc_control *ctrl, u32 pixelformat,
 		(bounds->height == crop->height))
 		return -EINVAL;
 
-	fimc_dbg("%s: left: %d, top: %d, width: %d, height: %d\n",
-		__func__, crop->left, crop->top, crop->width, crop->height);
+	/*fimc_dbg("%s: left: %d, top: %d, width: %d, height: %d\n",
+		__func__, crop->left, crop->top, crop->width, crop->height); */
 
 	switch (pixelformat) {
 	/* 1 plane, 32 bits per pixel */
@@ -1678,8 +1709,8 @@ int fimc50_hwset_output_offset(struct fimc_control *ctrl, u32 pixelformat,
 {
 	u32 cfg_y = 0, cfg_cb = 0, cfg_cr = 0;
 
-	fimc_dbg("%s: left: %d, top: %d, width: %d, height: %d\n",
-		__func__, crop->left, crop->top, crop->width, crop->height);
+	/* fimc_dbg("%s: left: %d, top: %d, width: %d, height: %d\n",
+		__func__, crop->left, crop->top, crop->width, crop->height); */
 
 	switch (pixelformat) {
 	/* 1 plane, 32 bits per pixel */
@@ -1755,6 +1786,8 @@ int fimc_hwset_output_offset(struct fimc_control *ctrl, u32 pixelformat,
 			     struct v4l2_rect *crop)
 {
 	struct s3c_platform_fimc *pdata = to_fimc_plat(ctrl->dev);
+
+	fimc_dbg("%s\n", __func__);
 
 	if (pdata->hw_ver >= 0x50)
 		fimc50_hwset_output_offset(ctrl, pixelformat, bounds, crop);
@@ -1869,6 +1902,8 @@ int fimc_hwset_input_offset(struct fimc_control *ctrl, u32 pixelformat,
 {
 	struct s3c_platform_fimc *pdata = to_fimc_plat(ctrl->dev);
 
+	fimc_dbg("%s\n", __func__);
+
 	if (pdata->hw_ver >= 0x50)
 		fimc50_hwset_input_offset(ctrl, pixelformat, bounds, crop);
 	else
@@ -1918,6 +1953,8 @@ int fimc_hwset_ext_output_size(struct fimc_control *ctrl, u32 width, u32 height)
 {
 	u32 cfg = readl(ctrl->regs + S3C_CIEXTEN);
 
+	fimc_dbg("%s\n", __func__);
+
 	cfg &= ~S3C_CIEXTEN_TARGETH_EXT_MASK;
 	cfg &= ~S3C_CIEXTEN_TARGETV_EXT_MASK;
 	cfg |= S3C_CIEXTEN_TARGETH_EXT(width);
@@ -1931,6 +1968,7 @@ int fimc_hwset_ext_output_size(struct fimc_control *ctrl, u32 width, u32 height)
 int fimc_hwset_input_addr_style(struct fimc_control *ctrl, u32 pixelformat)
 {
 	u32 cfg = readl(ctrl->regs + S3C_CIDMAPARAM);
+
 	cfg &= ~S3C_CIDMAPARAM_R_MODE_MASK;
 
 	if (pixelformat == V4L2_PIX_FMT_NV12T)
@@ -2030,6 +2068,7 @@ int fimc_hwset_input_lineskip(struct fimc_control *ctrl)
 int fimc_hw_reset_camera(struct fimc_control *ctrl)
 {
 	u32 cfg = 0;
+
 	cfg = readl(ctrl->regs + S3C_CIGCTRL);
 	cfg &= ~S3C_CIGCTRL_CAMRST_A;
 
@@ -2049,6 +2088,8 @@ int fimc_hwset_output_buf_sequence(struct fimc_control *ctrl, u32 shift, u32 ena
 	u32 cfg = readl(ctrl->regs + S3C_CIFCNTSEQ);
 	u32 mask = 0x00000001 << shift;
 
+	fimc_dbg("%s enable=%s\n", __func__, enable?"FIMC_FRAMECNT_SEQ_ENABLE":"FIMC_FRAMECNT_SEQ_DISABLE");
+
 	cfg &= (~mask);
 	cfg |= (enable << shift);
 	writel(cfg, ctrl->regs + S3C_CIFCNTSEQ);
@@ -2058,17 +2099,22 @@ int fimc_hwset_output_buf_sequence(struct fimc_control *ctrl, u32 shift, u32 ena
 int fimc_hwget_output_buf_sequence(struct fimc_control *ctrl)
 {
 	u32 cfg = readl(ctrl->regs + S3C_CIFCNTSEQ);
+	fimc_dbg("%s\n", __func__);
 	return cfg;
 }
 /* Above FIMC v5.1 */
 int fimc_hw_reset_output_buf_sequence(struct fimc_control *ctrl)
 {
+	fimc_dbg("%s\n", __func__);
+
 	writel(0x0, ctrl->regs + S3C_CIFCNTSEQ);
 	return 0;
 }
 
 void fimc_hwset_output_buf_sequence_all(struct fimc_control *ctrl, u32 framecnt_seq)
 {
+	fimc_err("%s\n", __func__);
+
 	writel(framecnt_seq, ctrl->regs + S3C_CIFCNTSEQ);
 }
 
@@ -2077,6 +2123,7 @@ int fimc_hwget_before_frame_count(struct fimc_control *ctrl)
 {
 	u32 before = readl(ctrl->regs + S3C_CISTATUS2);
 	before &= 0x00001f80; /* [12:7] FrameCnt_before */
+	fimc_dbg("%s\n", __func__);
 	return before >> 7;
 }
 
@@ -2085,6 +2132,7 @@ int fimc_hwget_present_frame_count(struct fimc_control *ctrl)
 {
 	u32 present = readl(ctrl->regs + S3C_CISTATUS2);
 	present &= 0x0000003f; /* [5:0] FrameCnt_present */
+	fimc_dbg("%s\n", __func__);
 	return present >> 0;
 }
 
@@ -2093,6 +2141,8 @@ int fimc_hwget_check_framecount_sequence(struct fimc_control *ctrl, u32 frame)
 	u32 framecnt_seq = readl(ctrl->regs + S3C_CIFCNTSEQ);
 	frame -= 1;
 	frame = 0x1 << frame;
+
+	fimc_dbg("%s\n", __func__);
 
 	if (framecnt_seq & frame)
 		return FIMC_FRAMECNT_SEQ_ENABLE;
@@ -2103,6 +2153,8 @@ int fimc_hwget_check_framecount_sequence(struct fimc_control *ctrl, u32 frame)
 int fimc_hwset_sysreg_camblk_fimd0_wb(struct fimc_control *ctrl)
 {
 	u32 camblk_cfg = readl(SYSREG_CAMERA_BLK);
+
+	fimc_dbg("%s\n", __func__);
 
 	if (soc_is_exynos4210()) {
 		camblk_cfg &= (~(0x3 << 14));
@@ -2121,6 +2173,8 @@ int fimc_hwset_sysreg_camblk_fimd1_wb(struct fimc_control *ctrl)
 {
 	u32 camblk_cfg = readl(SYSREG_CAMERA_BLK);
 
+	fimc_dbg("%s\n", __func__);
+
 	camblk_cfg &= (~(0x3 << 10));
 	camblk_cfg |= ctrl->id << 10;
 
@@ -2133,6 +2187,9 @@ int fimc_hwset_sysreg_camblk_isp_wb(struct fimc_control *ctrl)
 {
 	u32 camblk_cfg = readl(SYSREG_CAMERA_BLK);
 	u32 ispblk_cfg = readl(SYSREG_ISP_BLK);
+
+	fimc_dbg("%s\n", __func__);
+
 	camblk_cfg = camblk_cfg & (~(0x7 << 20));
 	if (ctrl->id == 0)
 		camblk_cfg = camblk_cfg | (0x1 << 20);
@@ -2163,6 +2220,8 @@ int fimc_hwset_sysreg_camblk_isp_wb(struct fimc_control *ctrl)
 void fimc_hwset_enable_frame_end_irq(struct fimc_control *ctrl)
 {
 	u32 cfg = readl(ctrl->regs + S3C_CIGCTRL);
+	fimc_dbg("%s\n", __func__);
+
 	cfg |= S3C_CIGCTRL_IRQ_END_DISABLE;
 	writel(cfg, ctrl->regs + S3C_CIGCTRL);
 }
@@ -2170,12 +2229,16 @@ void fimc_hwset_enable_frame_end_irq(struct fimc_control *ctrl)
 void fimc_hwset_disable_frame_end_irq(struct fimc_control *ctrl)
 {
 	u32 cfg = readl(ctrl->regs + S3C_CIGCTRL);
+	fimc_dbg("%s\n", __func__);
+
 	cfg &= ~S3C_CIGCTRL_IRQ_END_DISABLE;
 	writel(cfg, ctrl->regs + S3C_CIGCTRL);
 }
 
 void fimc_reset_status_reg(struct fimc_control *ctrl)
 {
+	fimc_dbg("%s\n", __func__);
+
 	writel(0x0, ctrl->regs + S3C_CISTATUS);
 }
 

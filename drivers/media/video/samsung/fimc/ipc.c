@@ -39,6 +39,7 @@ void ipc_enable_postprocessing(u32 onoff)
 {
 	u32 cfg = readl(ipc->regs + S3C_IPC_BYPASS);
 
+	//printk(KERN_INFO "%s onoff=%d\n", __func__, onoff);
 	if (!onoff)
 		cfg |= S3C_IPC_PP_BYPASS_DISABLE;
 	else
@@ -53,6 +54,7 @@ void ipc_enable(u32 onoff)
 {
 	u32 cfg = readl(ipc->regs + S3C_IPC_ENABLE);
 
+	//printk(KERN_INFO "%s onoff=%d\n", __func__, onoff);
 	if (!onoff)
 		cfg &= S3C_IPC_OFF;
 	else
@@ -65,6 +67,7 @@ void ipc_reset(void)
 {
 	u32 cfg;
 
+	//printk(KERN_INFO "%s\n", __func__);
 	do {
 		cfg = readl(ipc->regs + S3C_IPC_SRESET);
 	} while ((cfg & S3C_IPC_SRESET_MASK));
@@ -74,12 +77,14 @@ void ipc_reset(void)
 
 void ipc_start(void)
 {
+	//printk(KERN_INFO "%s\n", __func__);
 	ipc_enable_postprocessing(ON);
 	ipc_enable(ON);
 }
 
 void ipc_stop(void)
 {
+	//printk(KERN_INFO "%s\n", __func__);
 	ipc_enable_postprocessing(OFF);
 	ipc_enable(OFF);
 	ipc_reset();
@@ -95,6 +100,7 @@ void ipc_stop(void)
 
 void ipc_field_id_control(enum ipc_field_id id)
 {
+	//printk(KERN_INFO "%s id=%d\n", __func__, id);
 	writel(id, ipc->regs + S3C_IPC_FIELD_ID);
 	shadow_update();
 }
@@ -104,6 +110,7 @@ void ipc_field_id_mode(enum ipc_field_id_sel sel,
 {
 	u32 cfg;
 
+	//printk(KERN_INFO "%s sel=%d toggle=%d\n", __func__, sel, toggle);
 	cfg = readl(ipc->regs + S3C_IPC_MODE);
 	cfg |= S3C_IPC_FIELD_ID_SELECTION(sel);
 	writel(cfg, ipc->regs + S3C_IPC_MODE);
@@ -119,6 +126,7 @@ void ipc_2d_enable(enum ipc_enoff onoff)
 {
 	u32 cfg;
 
+	//printk(KERN_INFO "%s onoff=%d\n", __func__, onoff);
 	cfg = readl(ipc->regs + S3C_IPC_MODE);
 	cfg &= ~S3C_IPC_2D_MASK;
 	cfg |= S3C_IPC_2D_CTRL(onoff);
@@ -131,6 +139,7 @@ void ipc_set_mode(struct ipc_controlvariable con_var)
 {
 	u32 cfg = 0;
 
+	//printk(KERN_INFO "%s modeval=%s\n", __func__, (con_var.modeval==IPC_2D)?"IPC_2D":"IPC_HOR_SCALING_ENABLE");
 	/* Enalbed : 2D IPC , Disabled : Horizon Double Scailing */
 	ipc_field_id_control(IPC_BOTTOM_FIELD);
 	ipc_field_id_mode(CAM_FIELD_SIG, AUTO);
@@ -150,6 +159,7 @@ void ipc_set_mode(struct ipc_controlvariable con_var)
 
 void ipc_set_imgsize(struct ipc_source src, struct ipc_destination dst)
 {
+	//printk(KERN_INFO "%s\n", __func__);
 	writel(S3C_IPC_SRC_WIDTH_SET(src.srchsz),
 						ipc->regs + S3C_IPC_SRC_WIDTH);
 	writel(S3C_IPC_SRC_HEIGHT_SET(src.srcvsz),
@@ -167,6 +177,7 @@ void ipc_set_enhance_param(void)
 {
 	u32 i;
 
+	//printk(KERN_INFO "%s\n", __func__);
 	for (i = 0; i < 8; i++) {
 		ipc->enhance_var.brightness[i] = 0x0;
 		ipc->enhance_var.contrast[i] = 0x80;
@@ -182,6 +193,7 @@ void ipc_set_contrast(u32 *contrast)
 {
 	u32 i, line_eq[8];
 
+	//printk(KERN_INFO "%s\n", __func__);
 	for (i = 0; i < 8; i++) {
 		line_eq[i] = readl(ipc->regs + (S3C_IPC_PP_LINE_EQ0 + 4 * i));
 		line_eq[i] &= ~S3C_IPC_PP_LINE_CONTRAST_MASK;
@@ -196,6 +208,7 @@ void ipc_set_brightness(u32 *brightness)
 {
 	u32 i, line_eq[8];
 
+	//printk(KERN_INFO "%s\n", __func__);
 	for (i = 0; i < 8; i++) {
 		line_eq[i] = readl(ipc->regs + (S3C_IPC_PP_LINE_EQ0 + 4 * i));
 		line_eq[i] &= ~S3C_IPC_PP_LINE_BRIGTHNESS_MASK;
@@ -208,6 +221,7 @@ void ipc_set_brightness(u32 *brightness)
 
 void ipc_set_bright_offset(u32 offset)
 {
+	//printk(KERN_INFO "%s\n", __func__);
 	writel(S3C_IPC_PP_BRIGHT_OFFSET_SET(offset),
 					ipc->regs + S3C_IPC_PP_BRIGHT_OFFSET);
 	shadow_update();
@@ -215,6 +229,7 @@ void ipc_set_bright_offset(u32 offset)
 
 void ipc_set_saturation(u32 saturation)
 {
+	//printk(KERN_INFO "%s\n", __func__);
 	writel(S3C_IPC_PP_SATURATION_SET(saturation),
 					ipc->regs + S3C_IPC_PP_SATURATION);
 	shadow_update();
@@ -224,6 +239,7 @@ void ipc_set_sharpness(enum ipc_sharpness sharpness, u32 threshold)
 {
 	u32 sharpval;
 
+	//printk(KERN_INFO "%s\n", __func__);
 	switch (sharpness) {
 	case NO_EFFECT:
 		sharpval = 0x0;
@@ -253,6 +269,7 @@ void ipc_set_polyphase_filter(u32 filter_reg,
 	u16 tmp_tap;
 	u8 *coef;
 
+	//printk(KERN_INFO "%s\n", __func__);
 	base = (u32)ipc->regs + filter_reg;
 	coef = (u8 *)filter_coef;
 
@@ -272,6 +289,7 @@ void ipc_set_polyphase_filter(u32 filter_reg,
 void ipc_set_polyphase_filterset(enum ipc_filter_h_pp h_filter,
 						enum ipc_filter_v_pp v_filter)
 {
+	//printk(KERN_INFO "%s\n", __func__);
 	ipc_set_polyphase_filter(S3C_IPC_POLY8_Y0_LL,
 				ipc_8tap_coef_y_h + h_filter * 16 * 8, 8);
 	ipc_set_polyphase_filter(S3C_IPC_POLY4_C0_LL,
@@ -296,6 +314,7 @@ void ipc_set_filter(void)
 	enum ipc_filter_v_pp v_filter;
 	u32 h_ratio, v_ratio;
 
+	//printk(KERN_INFO "%s\n", __func__);
 	h_ratio = readl(ipc->regs + S3C_IPC_H_RATIO);
 	v_ratio = readl(ipc->regs + S3C_IPC_V_RATIO);
 
@@ -328,12 +347,14 @@ void ipc_set_filter(void)
 
 void ipc_set_pixel_rate(void)
 {
+	printk(KERN_INFO "%s\n", __func__);
 	writel(S3C_IPC_PEL_RATE_SET, ipc->regs + S3C_IPC_PEL_RATE_CTRL);
 	shadow_update();
 }
 
 int ipc_init(u32 src_width, u32 src_height, enum ipc_2d ipc2d)
 {
+	printk(KERN_INFO "%s\n", __func__);
 	if (src_width > IN_SC_MAX_WIDTH || src_height > IN_SC_MAX_HEIGHT) {
 		ipc_err("IPC input size error\n");
 		ipc_stop();
@@ -424,6 +445,7 @@ static int ipc_probe(struct platform_device *pdev)
 
 static int ipc_remove(struct platform_device *pdev)
 {
+	printk(KERN_INFO "%s\n", __func__);
 	ipc_stop();
 	kfree(ipc);
 

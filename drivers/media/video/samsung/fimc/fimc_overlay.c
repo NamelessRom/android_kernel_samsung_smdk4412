@@ -29,9 +29,11 @@ int fimc_try_fmt_overlay(struct file *filp, void *fh, struct v4l2_format *f)
 	u32 is_rotate = 0;
 	ctx = &ctrl->out->ctx[ctx_id];
 
-	fimc_info1("%s: top(%d) left(%d) width(%d) height(%d)\n", __func__,
+	fimc_dbg("%s: top(%d) left(%d) width(%d) height(%d)\n", __func__,
 			f->fmt.win.w.top, f->fmt.win.w.left,
 			f->fmt.win.w.width, f->fmt.win.w.height);
+
+	fimc_dbg("%s overlay.mode=%d ctx->rotate=%d ctx->flip=%d\n" , __func__, ctx->overlay.mode, ctx->rotate, ctx->flip);
 
 	if (ctx->overlay.mode == FIMC_OVLY_NONE_SINGLE_BUF ||
 		(ctx->overlay.mode == FIMC_OVLY_NONE_MULTI_BUF))
@@ -135,7 +137,7 @@ int fimc_s_fmt_vid_overlay(struct file *filp, void *fh, struct v4l2_format *f)
 	int ret = -1;
 	ctx = &ctrl->out->ctx[ctx_id];
 
-	fimc_info1("%s: called\n", __func__);
+	fimc_dbg("%s: called\n", __func__);
 
 	switch (ctx->status) {
 	case FIMC_STREAMON:
@@ -180,8 +182,6 @@ int fimc_g_fbuf(struct file *filp, void *fh, struct v4l2_framebuffer *fb)
 
 	ctx = &ctrl->out->ctx[ctx_id];
 
-	fimc_info1("%s: called\n", __func__);
-
 	fb->capability = ctx->fbuf.capability;
 	fb->flags = 0;
 	fb->base = ctx->fbuf.base;
@@ -211,6 +211,8 @@ int fimc_g_fbuf(struct file *filp, void *fh, struct v4l2_framebuffer *fb)
 	fb->fmt.colorspace = V4L2_COLORSPACE_SMPTE170M;
 	fb->fmt.priv = 0;
 
+	fimc_err("%s: capability=%d base=0x%x width=%d height=%d\n pixelformat=%d bytesperline=%d", __func__, fb->capability, fb->base,
+			fb->fmt.width, fb->fmt.height, fb->fmt.pixelformat, fb->fmt.bytesperline);
 	return 0;
 }
 
@@ -223,7 +225,7 @@ int fimc_s_fbuf(struct file *filp, void *fh, struct v4l2_framebuffer *fb)
 	u32 format = fb->fmt.pixelformat;
 	ctx = &ctrl->out->ctx[ctx_id];
 
-	fimc_info1("%s: called. width(%d), height(%d)\n",
+	fimc_dbg("%s: called. width(%d), height(%d)\n",
 			__func__, fb->fmt.width, fb->fmt.height);
 
 	ctx->fbuf.capability = V4L2_FBUF_CAP_EXTERNOVERLAY;

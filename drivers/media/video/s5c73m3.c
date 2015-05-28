@@ -510,7 +510,7 @@ static int s5c73m3_set_mode(struct v4l2_subdev *sd)
 {
 	struct s5c73m3_state *state = to_state(sd);
 	int err;
-	cam_trace("E\n");
+	cam_info("E format_mode=%d hybrid_mode=%d yuv_snapshot=%d \n", state->format_mode, state->hybrid_mode, state->yuv_snapshot);
 
 	if (state->format_mode != V4L2_PIX_FMT_MODE_CAPTURE) {
 		if (state->hdr_mode || state->yuv_snapshot) {
@@ -538,7 +538,7 @@ static int s5c73m3_set_mode(struct v4l2_subdev *sd)
 		}
 	}
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -594,12 +594,12 @@ static int s5c73m3_set_af_softlanding(struct v4l2_subdev *sd)
 {
 	int err = 0;
 
-	cam_trace("E\n");
+	cam_info("E\n");
 
 	err = s5c73m3_writeb(sd, S5C73M3_AF_SOFTLANDING,
 		S5C73M3_AF_SOFTLANDING_ON);
 	CHECK_ERR(err);
-	cam_trace("X\n");
+	cam_info("X\n");
 
 	return 0;
 }
@@ -629,6 +629,18 @@ static int s5c73m3_get_sensor_fw_binary(struct v4l2_subdev *sd)
 #if defined(CONFIG_MACH_T0)
 	if (state->sensor_fw[1] == 'D') {
 		sprintf(fw_path, "/data/cfw/SlimISP_%cK.bin",
+			state->sensor_fw[0]);
+	} else {
+		sprintf(fw_path, "/data/cfw/SlimISP_%c%c.bin",
+			state->sensor_fw[0],
+			state->sensor_fw[1]);
+	}
+#elif defined(CONFIG_MACH_BAFFIN)
+	if (state->sensor_fw[1] == 'D') {
+		sprintf(fw_path, "/data/cfw/SlimISP_%cK.bin",
+			state->sensor_fw[0]);
+	} else if (state->sensor_fw[1] == 'H') {
+		sprintf(fw_path, "/data/cfw/SlimISP_%cM.bin",
 			state->sensor_fw[0]);
 	} else {
 		sprintf(fw_path, "/data/cfw/SlimISP_%c%c.bin",
@@ -1102,8 +1114,7 @@ request_fw:
 			retVal = s5c73m3_compare_date(sd,
 				S5C73M3_IN_DATA,
 				S5C73M3_IN_SYSTEM);
-			/* only use firmware from system if it's newer than firmware on data */
-			if (retVal < 0) {
+			if (retVal <= 0) {
 				/*unlink(&fw_path_in_data);*/
 				state->fw_index = S5C73M3_IN_SYSTEM;
 			} else {
@@ -1336,7 +1347,7 @@ static int s5c73m3_set_sensor_mode(struct v4l2_subdev *sd, int val)
 {
 	struct s5c73m3_state *state = to_state(sd);
 	int err;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, value %d\n", val);
 
 retry:
 	switch (val) {
@@ -1359,7 +1370,7 @@ retry:
 	}
 	state->sensor_mode = val;
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -1368,7 +1379,7 @@ static int s5c73m3_set_flash(struct v4l2_subdev *sd, int val, int recording)
 	struct s5c73m3_state *state = to_state(sd);
 	int err;
 	u16 pre_flash = false;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, val=%d recording=%d\n", val, recording);
 
 	s5c73m3_read(sd, 0x0009, S5C73M3_STILL_PRE_FLASH | 0x5000, &pre_flash);
 	if (pre_flash) {
@@ -1423,14 +1434,14 @@ retry:
 	}
 	state->flash_mode = val;
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
 static int s5c73m3_set_iso(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 {
 	int err;
-	cam_dbg("E, value %d\n", ctrl->value);
+	cam_info("E, value %d\n", ctrl->value);
 
 retry:
 	switch (ctrl->value) {
@@ -1470,14 +1481,14 @@ retry:
 		goto retry;
 	}
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
 static int s5c73m3_set_metering(struct v4l2_subdev *sd, int val)
 {
 	int err;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, value %d\n", val);
 
 retry:
 	switch (val) {
@@ -1505,7 +1516,7 @@ retry:
 		goto retry;
 	}
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -1513,7 +1524,7 @@ static int s5c73m3_set_exposure(struct v4l2_subdev *sd,
 	struct v4l2_control *ctrl)
 {
 	int err;
-	cam_dbg("E, value %d\n", ctrl->value);
+	cam_info("E, value %d\n", ctrl->value);
 
 	if (ctrl->value < -4 || ctrl->value > 4) {
 		cam_warn("invalid value, %d\n", ctrl->value);
@@ -1523,7 +1534,7 @@ static int s5c73m3_set_exposure(struct v4l2_subdev *sd,
 		ctrl->value + 4);
 	CHECK_ERR(err);
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -1533,7 +1544,7 @@ static int s5c73m3_set_contrast(struct v4l2_subdev *sd,
 	int err;
 	int contrast = 0;
 	int temp_contrast = 0;
-	cam_dbg("E, value %d\n", ctrl->value);
+	cam_info("E, value %d\n", ctrl->value);
 
 	if (ctrl->value < 0 || ctrl->value > 4) {
 		cam_warn("invalid value, %d\n", ctrl->value);
@@ -1548,7 +1559,7 @@ static int s5c73m3_set_contrast(struct v4l2_subdev *sd,
 		contrast);
 	CHECK_ERR(err);
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -1558,7 +1569,7 @@ static int s5c73m3_set_sharpness(struct v4l2_subdev *sd,
 	int err;
 	int sharpness = 0;
 	int temp_sharpness = 0;
-	cam_dbg("E, value %d\n", ctrl->value);
+	cam_info("E, value %d\n", ctrl->value);
 
 	if (ctrl->value < 0 || ctrl->value > 4) {
 		cam_warn("invalid value, %d\n", ctrl->value);
@@ -1573,7 +1584,7 @@ static int s5c73m3_set_sharpness(struct v4l2_subdev *sd,
 		sharpness);
 	CHECK_ERR(err);
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -1581,7 +1592,7 @@ static int s5c73m3_set_whitebalance(struct v4l2_subdev *sd, int val)
 {
 	struct s5c73m3_state *state = to_state(sd);
 	int err;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, value %d\n", val);
 
 retry:
 	switch (val) {
@@ -1623,7 +1634,7 @@ retry:
 
 	state->wb_mode = val;
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -1631,7 +1642,7 @@ static int s5c73m3_set_scene_mode(struct v4l2_subdev *sd, int val)
 {
 	struct s5c73m3_state *state = to_state(sd);
 	int err;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, value %d\n", val);
 
 retry:
 	switch (val) {
@@ -1732,7 +1743,7 @@ retry:
 	}
 
 	state->scene_mode = val;
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -1740,7 +1751,7 @@ static int s5c73m3_capture_firework(struct v4l2_subdev *sd)
 {
 	int err = 0;
 
-	cam_dbg("E, capture_firework\n");
+	cam_info("E, capture_firework\n");
 
 	err = s5c73m3_writeb(sd, S5C73M3_FIREWORK_CAPTURE, 0x0001);
 	CHECK_ERR(err);
@@ -1752,7 +1763,7 @@ static int s5c73m3_capture_nightshot(struct v4l2_subdev *sd)
 {
 	int err = 0;
 
-	cam_dbg("E, capture_nightshot\n");
+	cam_info("E, capture_nightshot\n");
 
 	err = s5c73m3_writeb(sd, S5C73M3_NIGHTSHOT_CAPTURE, 0x0001);
 	CHECK_ERR(err);
@@ -1765,7 +1776,7 @@ static int s5c73m3_set_effect(struct v4l2_subdev *sd, int val)
 	int err = 0;
 	int num_entries = 0;
 	int i = 0;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, value %d\n", val);
 
 	if (val < IMAGE_EFFECT_BASE || val > IMAGE_EFFECT_MAX)
 		val = IMAGE_EFFECT_NONE;
@@ -1780,14 +1791,14 @@ static int s5c73m3_set_effect(struct v4l2_subdev *sd, int val)
 		}
 	}
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
 static int s5c73m3_set_wdr(struct v4l2_subdev *sd, int val)
 {
 	int err;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, value %d\n", val);
 
 retry:
 	switch (val) {
@@ -1809,14 +1820,14 @@ retry:
 		goto retry;
 	}
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
 static int s5c73m3_set_antishake(struct v4l2_subdev *sd, int val)
 {
 	int err = 0;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, value %d\n", val);
 
 	if (val) {
 		err = s5c73m3_writeb(sd, S5C73M3_AE_MODE,
@@ -1870,7 +1881,7 @@ static int s5c73m3_stop_af_lens(struct v4l2_subdev *sd, int val)
 {
 	struct s5c73m3_state *state = to_state(sd);
 	int err;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, value %d\n", val);
 
 	if (val == CAF_START) {
 		if (state->focus.mode == FOCUS_MODE_CONTINOUS_VIDEO) {
@@ -1887,7 +1898,7 @@ static int s5c73m3_stop_af_lens(struct v4l2_subdev *sd, int val)
 	}
 	CHECK_ERR(err);
 
-	cam_trace("X\n");
+	cam_info("X\n");
 
 	return err;
 }
@@ -1919,7 +1930,7 @@ static int s5c73m3_set_af(struct v4l2_subdev *sd, int val)
 
 	CHECK_ERR(err);
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return err;
 }
 
@@ -1942,6 +1953,7 @@ static int s5c73m3_get_af_result(struct v4l2_subdev *sd,
 	u16 af_status = S5C73M3_AF_STATUS_UNFOCUSED;
 	/*u16 temp_status = 0;*/
 
+	cam_info("E\n");
 	err = s5c73m3_read(sd, 0x0009, S5C73M3_AF_STATUS, &af_status);
 
 	/*err = s5c73m3_read(sd, 0x0009, 0x5840, &temp_status);*/
@@ -1977,7 +1989,7 @@ static int s5c73m3_set_af_mode(struct v4l2_subdev *sd, int val)
 {
 	struct s5c73m3_state *state = to_state(sd);
 	int err;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, value %d\n", val);
 
 retry:
 	switch (val) {
@@ -2071,7 +2083,7 @@ retry:
 
 	state->focus.mode = val;
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -2080,6 +2092,7 @@ static int s5c73m3_set_touch_auto_focus(struct v4l2_subdev *sd)
 	struct s5c73m3_state *state = to_state(sd);
 	int err;
 
+	cam_info("x=%d y=%d", state->focus.pos_x, state->focus.pos_y);
 	err = s5c73m3_i2c_write(sd, 0xfcfc, 0x3310);
 	CHECK_ERR(err);
 
@@ -2125,7 +2138,7 @@ static int s5c73m3_set_touch_auto_focus(struct v4l2_subdev *sd)
 static int s5c73m3_set_zoom(struct v4l2_subdev *sd, int value)
 {
 	int err;
-	cam_dbg("E, value %d\n", value);
+	cam_info("E, value %d\n", value);
 
 retry:
 	if (value < 0 || value > 30) {
@@ -2144,7 +2157,7 @@ static int s5c73m3_set_jpeg_quality(struct v4l2_subdev *sd,
 	struct v4l2_control *ctrl)
 {
 	int val = ctrl->value, err;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, value %d\n", val);
 
 	if (val <= 65)		/* Normal */
 		err = s5c73m3_writeb(sd, S5C73M3_IMAGE_QUALITY,
@@ -2173,8 +2186,9 @@ static int s5c73m3_aeawb_lock_unlock(struct v4l2_subdev *sd, int val)
 	int awb_lock_changed =
 		~(awb_lock & state->awb_lock) & (awb_lock | state->awb_lock);
 
+	cam_info("val=%d", val);
 	if (ae_lock_changed) {
-		cam_dbg("ae lock - %s\n", ae_lock ? "true" : "false");
+		cam_info("ae lock - %s\n", ae_lock ? "true" : "false");
 		err = s5c73m3_writeb(sd, S5C73M3_AE_CON,
 				ae_lock ? S5C73M3_AE_STOP : S5C73M3_AE_START);
 		CHECK_ERR(err);
@@ -2182,7 +2196,7 @@ static int s5c73m3_aeawb_lock_unlock(struct v4l2_subdev *sd, int val)
 	}
 	if (awb_lock_changed &&
 		state->wb_mode == WHITE_BALANCE_AUTO) {
-		cam_dbg("awb lock - %s\n", awb_lock ? "true" : "false");
+		cam_info("awb lock - %s\n", awb_lock ? "true" : "false");
 		err = s5c73m3_writeb(sd, S5C73M3_AWB_CON,
 			awb_lock ? S5C73M3_AWB_STOP : S5C73M3_AWB_START);
 		CHECK_ERR(err);
@@ -2220,6 +2234,7 @@ static int s5c73m3_start_capture(struct v4l2_subdev *sd, int val)
 	u16 isneed_flash = false;
 	u16 pre_flash = false;
 
+	cam_info("val %d", val);
 	s5c73m3_read(sd, 0x0009, S5C73M3_STILL_PRE_FLASH | 0x5000, &pre_flash);
 
 	if (state->flash_mode == FLASH_MODE_ON) {
@@ -2257,6 +2272,7 @@ static int s5c73m3_set_auto_bracket_mode(struct v4l2_subdev *sd)
 {
 	int err = 0;
 
+	cam_info("E\n");
 		err = s5c73m3_writeb(sd, S5C73M3_AE_AUTO_BRAKET,
 		S5C73M3_AE_AUTO_BRAKET_EV20);
 		CHECK_ERR(err);
@@ -2269,12 +2285,11 @@ static int s5c73m3_set_frame_rate(struct v4l2_subdev *sd, int fps)
 	int err = 0;
 	struct s5c73m3_state *state = to_state(sd);
 
+	cam_info("E, value %d\n", fps);
 	if (!state->stream_enable) {
 		state->fps = fps;
 		return 0;
 	}
-
-	cam_dbg("E, value %d\n", fps);
 
 	switch (fps) {
 	case 120:
@@ -2322,7 +2337,7 @@ static int s5c73m3_set_face_zoom(struct v4l2_subdev *sd, int val)
 	struct s5c73m3_state *state = to_state(sd);
 	int err;
 
-	cam_dbg("s5c73m3_set_face_zoom\n");
+	cam_info("val=%d\n", val);
 
 	err = s5c73m3_writeb(sd, S5C73M3_AF_CON,
 		S5C73M3_AF_CON_STOP);
@@ -2379,7 +2394,7 @@ static int s5c73m3_set_face_zoom(struct v4l2_subdev *sd, int val)
 static int s5c73m3_set_face_detection(struct v4l2_subdev *sd, int val)
 {
 	int err;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, val=%d\n", val);
 
 retry:
 	switch (val) {
@@ -2419,13 +2434,13 @@ retry:
 static int s5c73m3_set_hybrid_capture(struct v4l2_subdev *sd)
 {
 	int err;
-	cam_trace("E\n");
+	cam_info("E\n");
 
 	err = s5c73m3_writeb(sd, S5C73M3_HYBRID_CAPTURE, 1);
 
 	CHECK_ERR(err);
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -2444,13 +2459,13 @@ static int s5c73m3_get_lux(struct v4l2_subdev *sd,
 static int s5c73m3_set_low_light_mode(struct v4l2_subdev *sd, int val)
 {
 	int err;
-	cam_dbg("E, value %d\n", val);
+	cam_info("E, value %d\n", val);
 
 	err = s5c73m3_writeb(sd, S5C73M3_AE_LOW_LIGHT_MODE, val);
 
 	CHECK_ERR(err);
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -2459,8 +2474,9 @@ static int s5c73m3_s_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 	struct s5c73m3_state *state = to_state(sd);
 	int err = 0;
 
-	printk(KERN_INFO "s5c73m3_s_ctrl: id %d, value %d\n",
-		ctrl->id - V4L2_CID_PRIVATE_BASE, ctrl->value);
+	cam_info("id %d, value %d\n", ctrl->id - V4L2_CID_PRIVATE_BASE, ctrl->value);
+	//printk(KERN_INFO "id %d, value %d\n",
+	//	ctrl->id - V4L2_CID_PRIVATE_BASE, ctrl->value);
 
 	if (unlikely(state->isp.bad_fw && ctrl->id != V4L2_CID_CAM_UPDATE_FW)) {
 		cam_err("\"Unknown\" state, please update F/W");
@@ -2648,9 +2664,7 @@ static int s5c73m3_g_ctrl(struct v4l2_subdev *sd, struct v4l2_control *ctrl)
 {
 	int err = 0;
 
-	printk(KERN_INFO "s5c73m3_g_ctrl: id %d, value %d\n",
-        ctrl->id - V4L2_CID_PRIVATE_BASE, ctrl->value);
-
+	cam_info("id %d", ctrl->id - V4L2_CID_PRIVATE_BASE);
 	switch (ctrl->id) {
 	case V4L2_CID_CAMERA_CAPTURE:
 		err = s5c73m3_get_pre_flash(sd, ctrl);
@@ -2866,22 +2880,22 @@ static int s5c73m3_set_frmsize(struct v4l2_subdev *sd)
 {
 	struct s5c73m3_state *state = to_state(sd);
 	int err ;
-	cam_trace("E\n");
+	cam_info("E fast_mode=%d\n", state->fast_mode);
 
 	if (state->fast_mode == FAST_MODE_SUBSAMPLING_HALF) {
-		cam_dbg("S5C73M3_FAST_MODE_SUBSAMPLING_HALF\n");
+		cam_info("S5C73M3_FAST_MODE_SUBSAMPLING_HALF\n");
 		err = s5c73m3_writeb(sd, S5C73M3_CHG_MODE,
 			S5C73M3_FAST_MODE_SUBSAMPLING_HALF
 			| state->preview->reg_val | (state->sensor_mode<<8));
 		CHECK_ERR(err);
 	} else if (state->fast_mode == FAST_MODE_SUBSAMPLING_QUARTER) {
-		cam_dbg("S5C73M3_FAST_MODE_SUBSAMPLING_QUARTER\n");
+		cam_info("S5C73M3_FAST_MODE_SUBSAMPLING_QUARTER\n");
 		err = s5c73m3_writeb(sd, S5C73M3_CHG_MODE,
 			S5C73M3_FAST_MODE_SUBSAMPLING_QUARTER
 			| state->preview->reg_val | (state->sensor_mode<<8));
 		CHECK_ERR(err);
 	} else {
-		cam_dbg("S5C73M3_DEFAULT_MODE\n");
+		cam_info("S5C73M3_DEFAULT_MODE javi\n");
 		err = s5c73m3_writeb(sd, S5C73M3_CHG_MODE,
 			S5C73M3_DEFAULT_MODE
 			| state->capture->reg_val | state->preview->reg_val
@@ -2889,7 +2903,7 @@ static int s5c73m3_set_frmsize(struct v4l2_subdev *sd)
 		CHECK_ERR(err);
 	}
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -2905,7 +2919,7 @@ static int s5c73m3_s_fmt(struct v4l2_subdev *sd,
 	u32 tmp_width;
 	u32 old_index, old_index_cap;
 	int i, num_entries;
-	cam_trace("E\n");
+	cam_info("E width=%d height=%d colorspace=%d\n", ffmt->width, ffmt->height, ffmt->colorspace);
 
 	if (unlikely(state->isp.bad_fw)) {
 		cam_err("\"Unknown\" state, please update F/W");
@@ -2954,6 +2968,7 @@ static int s5c73m3_s_fmt(struct v4l2_subdev *sd,
 	width = state->jpeg_width;
 	height = state->jpeg_height;
 
+	cam_info("jpeg_width=%d jpeg_height=%d", state->jpeg_width, state->jpeg_height);
 	num_entries = ARRAY_SIZE(capture_frmsizes);
 	for (i = 0; i < num_entries; i++) {
 		if (width == capture_frmsizes[i].width &&
@@ -2969,8 +2984,8 @@ static int s5c73m3_s_fmt(struct v4l2_subdev *sd,
 				S5C73M3_CAPTURE_VGA);
 	}
 
-	cam_dbg("yuv %dx%d\n", (*frmsize)->width, (*frmsize)->height);
-	cam_dbg("jpeg %dx%d\n", (*capfrmsize)->width, (*capfrmsize)->height);
+	cam_info("yuv %dx%d\n", (*frmsize)->width, (*frmsize)->height);
+	cam_info("jpeg %dx%d\n", (*capfrmsize)->width, (*capfrmsize)->height);
 	if (state->stream_enable) {
 		if (ffmt->colorspace == V4L2_COLORSPACE_JPEG) {
 			if ((old_index != (*frmsize)->index)
@@ -2983,7 +2998,7 @@ static int s5c73m3_s_fmt(struct v4l2_subdev *sd,
 	} else
 		s5c73m3_set_frmsize(sd);
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -3017,7 +3032,7 @@ static int s5c73m3_s_parm(struct v4l2_subdev *sd, struct v4l2_streamparm *a)
 		}
 		state->fps = fps;
 	}
-	cam_err("Frame rate = %d(%d)\n", fps, state->fps);
+	cam_info("Frame rate = %d(%d)\n", fps, state->fps);
 
 	err = s5c73m3_set_frame_rate(sd, state->fps);
 	CHECK_ERR(err);
@@ -3039,6 +3054,7 @@ static int s5c73m3_enum_framesizes(struct v4l2_subdev *sd,
 	if (state->preview == NULL)
 		return -EINVAL;
 
+	cam_info("E hdr_mode=%d yuv_snapshot=%d\n", state->hdr_mode, state->yuv_snapshot);
 	fsize->type = V4L2_FRMSIZE_TYPE_DISCRETE;
 	if (state->hdr_mode || state->yuv_snapshot) {
 		fsize->discrete.width = state->capture->width;
@@ -3094,7 +3110,7 @@ static int s5c73m3_s_stream_hdr(struct v4l2_subdev *sd, int enable)
 {
 	struct s5c73m3_state *state = to_state(sd);
 	int err = 0;
-	cam_trace("E\n");
+	cam_info("E enable=%d\n", enable);
 
 	if (enable) {
 		err = s5c73m3_i2c_write(sd, 0x0050, 0x0009);
@@ -3135,7 +3151,7 @@ static int s5c73m3_s_stream_hdr(struct v4l2_subdev *sd, int enable)
 		  err = s5c73m3_s_stream_sensor(sd, enable);
 	}
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 
@@ -3144,7 +3160,7 @@ static int s5c73m3_s_stream(struct v4l2_subdev *sd, int enable)
 	struct s5c73m3_state *state = to_state(sd);
 	int err;
 
-	cam_trace("E\n");
+	cam_info("E enable=%d\n", enable);
 
 	if (unlikely(state->isp.bad_fw)) {
 		cam_err("\"Unknown\" state, please update F/W");
@@ -3154,6 +3170,7 @@ static int s5c73m3_s_stream(struct v4l2_subdev *sd, int enable)
 	switch (enable) {
 	case STREAM_MODE_CAM_ON:
 	case STREAM_MODE_CAM_OFF:
+		cam_info("STREAM_MODE_CAM_ON or OFF");
 		switch (state->format_mode) {
 		case V4L2_PIX_FMT_MODE_CAPTURE:
 			cam_info("capture %s",
@@ -3193,6 +3210,7 @@ static int s5c73m3_s_stream(struct v4l2_subdev *sd, int enable)
 		break;
 
 	case STREAM_MODE_MOVIE_ON:
+		cam_info("STREAM_MODE_MOVIE_ON\n");
 		if (state->flash_mode != FLASH_MODE_OFF)
 			err = s5c73m3_set_flash(sd, state->flash_mode, 1);
 
@@ -3202,6 +3220,7 @@ static int s5c73m3_s_stream(struct v4l2_subdev *sd, int enable)
 		break;
 
 	case STREAM_MODE_MOVIE_OFF:
+		cam_info("STREAM_MODE_MOVIE_OFF\n");
 		if (state->preview->index == S5C73M3_PREVIEW_720P ||
 				state->preview->index == S5C73M3_PREVIEW_1080P)
 			err = s5c73m3_set_af(sd, 0);
@@ -3224,7 +3243,7 @@ static int s5c73m3_s_stream(struct v4l2_subdev *sd, int enable)
 			s5c73m3_set_frame_rate(sd, state->fps);
 	}
 
-	cam_trace("X\n");
+	cam_info("X\n");
 	return 0;
 }
 

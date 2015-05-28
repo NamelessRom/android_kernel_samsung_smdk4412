@@ -294,6 +294,8 @@ struct ion_handle *ion_alloc(struct ion_client *client, size_t len,
 	struct ion_device *dev = client->dev;
 	struct ion_buffer *buffer = NULL;
 
+	printk(KERN_ERR "[ION] %s: flags=0x%x align=%d len=%d bytes\n", __func__, flags, align, len);
+
 	/*
 	 * traverse the list of heaps available in this system in priority
 	 * order.  If the heap type is supported by the client, and matches the
@@ -1023,7 +1025,7 @@ static int ion_share_mmap(struct file *file, struct vm_area_struct *vma)
 	struct ion_handle *handle;
 	int ret;
 
-	pr_debug("%s: %d\n", __func__, __LINE__);
+	printk(KERN_ERR "%s: %d, size=%ld bytes\n", __func__, __LINE__, size);
 	/* make sure the client still exists, it's possible for the client to
 	   have gone away but the map/share fd still to be around, take
 	   a reference to it so it can't go away while this mapping exists */
@@ -1065,6 +1067,8 @@ static int ion_share_mmap(struct file *file, struct vm_area_struct *vma)
 		       __func__);
 		goto err1;
 	}
+
+	printk(KERN_ERR "[ION] %s: I suspect phys is %p\n", __func__, (void *)( vma->vm_pgoff << PAGE_SHIFT));
 
 	vma->vm_ops = &ion_vm_ops;
 	/* move the handle into the vm_private_data so we can access it from
@@ -1124,10 +1128,13 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	{
 		struct ion_allocation_data data;
 
+		printk(KERN_ERR "[ION] %s 0x%08x(ION_IOC_ALLOC)", __func__, cmd);
 		if (copy_from_user(&data, (void __user *)arg, sizeof(data)))
 			return -EFAULT;
 		data.handle = ion_alloc(client, data.len, data.align,
 					     data.flags);
+
+		printk(KERN_ERR "[ION]: %s ION_IOC_ALLOC@%p\n", __func__, (void *) data.handle);
 
 		if (IS_ERR(data.handle))
 			return PTR_ERR(data.handle);
@@ -1143,6 +1150,7 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		struct ion_handle_data data;
 		bool valid;
 
+		printk(KERN_ERR "[ION] %s 0x%08x(ION_IOC_FREE)", __func__, cmd);
 		if (copy_from_user(&data, (void __user *)arg,
 				   sizeof(struct ion_handle_data)))
 			return -EFAULT;
@@ -1155,10 +1163,13 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		break;
 	}
 	case ION_IOC_MAP:
+		printk(KERN_ERR "[ION] %s 0x%08x(ION_IOC_MAP)", __func__, cmd);
+
 	case ION_IOC_SHARE:
 	{
 		struct ion_fd_data data;
 
+		printk(KERN_ERR "[ION] %s 0x%08x(ION_IOC_SHARE)", __func__, cmd);
 		if (copy_from_user(&data, (void __user *)arg, sizeof(data)))
 			return -EFAULT;
 		mutex_lock(&client->lock);
@@ -1177,6 +1188,7 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case ION_IOC_IMPORT:
 	{
 		struct ion_fd_data data;
+		printk(KERN_ERR "[ION] %s 0x%08x(ION_IOC_IMPORT)", __func__, cmd);
 		if (copy_from_user(&data, (void __user *)arg,
 				   sizeof(struct ion_fd_data)))
 			return -EFAULT;
@@ -1194,6 +1206,7 @@ static long ion_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		struct ion_device *dev = client->dev;
 		struct ion_custom_data data;
 
+		printk(KERN_ERR "[ION] %s 0x%08x(ION_IOC_CUSTOM)", __func__, cmd);
 		if (!dev->custom_ioctl)
 			return -ENOTTY;
 		if (copy_from_user(&data, (void __user *)arg,

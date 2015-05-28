@@ -144,6 +144,7 @@ void *v4l2_m2m_get_curr_priv(struct v4l2_m2m_dev *m2m_dev)
 	void *ret = NULL;
 
 	spin_lock_irqsave(&m2m_dev->job_spinlock, flags);
+	printk(KERN_ERR "%s: priv=%p\n", __func__, (void *) m2m_dev->curr_ctx->priv);
 	if (m2m_dev->curr_ctx)
 		ret = m2m_dev->curr_ctx->priv;
 	spin_unlock_irqrestore(&m2m_dev->job_spinlock, flags);
@@ -346,12 +347,18 @@ int v4l2_m2m_querybuf(struct file *file, struct v4l2_m2m_ctx *m2m_ctx,
 
 	/* Adjust MMAP memory offsets for the CAPTURE queue */
 	if (buf->memory == V4L2_MEMORY_MMAP && !V4L2_TYPE_IS_OUTPUT(vq->type)) {
+		printk(KERN_ERR "%s: V4L2_MEMORY_MMAP!\n", __func__);
 		if (V4L2_TYPE_IS_MULTIPLANAR(vq->type)) {
-			for (i = 0; i < buf->length; ++i)
+			for (i = 0; i < buf->length; ++i) {
+				printk(KERN_ERR "%s: buf->m.planes[%d].m.mem_offset before = %p!\n", __func__, i, buf->m.planes[i].m.mem_offset);
 				buf->m.planes[i].m.mem_offset
 					+= DST_QUEUE_OFF_BASE;
+				printk(KERN_ERR "%s: buf->m.planes[%d].m.mem_offset after = %p!\n", __func__, i, buf->m.planes[i].m.mem_offset);
+			}
 		} else {
+			printk(KERN_ERR "%s: buf->m.offset before = %p!\n", __func__, buf->m.offset);
 			buf->m.offset += DST_QUEUE_OFF_BASE;
+			printk(KERN_ERR "%s: buf->m.offset after = %p!\n", __func__, buf->m.offset);
 		}
 	}
 
@@ -502,6 +509,7 @@ int v4l2_m2m_mmap(struct file *file, struct v4l2_m2m_ctx *m2m_ctx,
 	unsigned long offset = vma->vm_pgoff << PAGE_SHIFT;
 	struct vb2_queue *vq;
 
+	printk(KERN_ERR "%s: offset=%p DST_QUEUE_OFF_BASE=%p\n", __func__, (void *) offset, (void *) DST_QUEUE_OFF_BASE );
 	if (offset < DST_QUEUE_OFF_BASE) {
 		vq = v4l2_m2m_get_src_vq(m2m_ctx);
 	} else {

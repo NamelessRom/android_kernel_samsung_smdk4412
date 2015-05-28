@@ -69,6 +69,7 @@ int fimc_dma_alloc(struct fimc_control *ctrl, struct fimc_buf_set *bs,
 {
 	dma_addr_t end, *curr;
 
+	fimc_dbg("%s bs->length[%d]=%d\n", __func__, i, bs->length[i]);
 	mutex_lock(&ctrl->lock);
 
 	end = ctrl->mem.base + ctrl->mem.size;
@@ -116,6 +117,7 @@ void fimc_dma_free(struct fimc_control *ctrl, struct fimc_buf_set *bs, int i)
 	int total = bs->length[i] + bs->garbage[i];
 	mutex_lock(&ctrl->lock);
 
+	fimc_dbg("%s i=%d\n", __func__, i);
 	if (bs->base[i]) {
 		if (ctrl->mem.curr - total >= ctrl->mem.base)
 			ctrl->mem.curr -= total;
@@ -134,6 +136,7 @@ static inline u32 fimc_irq_out_single_buf(struct fimc_control *ctrl,
 	int ret = -1, ctx_num, next;
 	u32 wakeup = 1;
 
+	fimc_dbg("%s ctx->status=%d\n", __func__, ctx->status);
 	if (ctx->status == FIMC_READY_OFF || ctx->status == FIMC_STREAMOFF) {
 		ctrl->out->idxs.active.ctx = -1;
 		ctrl->out->idxs.active.idx = -1;
@@ -253,6 +256,7 @@ static inline u32 fimc_irq_out_multi_buf(struct fimc_control *ctrl,
 	int ret = -1, ctx_num, next;
 	u32 wakeup = 1;
 
+	fimc_dbg("%s ctx->status=%d\n", __func__, ctx->status);
 	if (ctx->status == FIMC_READY_OFF) {
 		if (ctrl->out->idxs.active.ctx == ctx->ctx_num) {
 			ctrl->out->idxs.active.ctx = -1;
@@ -315,6 +319,7 @@ static inline u32 fimc_irq_out_dma(struct fimc_control *ctrl,
 	int cfg;
 	u32 wakeup = 1;
 
+	fimc_dbg("%s ctx->status=%d\n", __func__, ctx->status);
 	if (ctx->status == FIMC_READY_OFF
 			|| ctx->status == FIMC_STREAMOFF) {
 		ctrl->out->idxs.active.ctx = -1;
@@ -398,6 +403,7 @@ static inline u32 fimc_irq_out_fimd(struct fimc_control *ctrl,
 	int ret = -1, ctx_num, next;
 	u32 wakeup = 0;
 
+	fimc_dbg("%s\n", __func__);
 	/* Attach done buffer to outgoing queue. */
 	if (ctrl->out->idxs.prev.idx != -1) {
 		ret = fimc_push_outq(ctrl, ctx, ctrl->out->idxs.prev.idx);
@@ -443,6 +449,7 @@ static inline void fimc_irq_out(struct fimc_control *ctrl)
 	u32 wakeup = 1;
 	int ctx_num = ctrl->out->idxs.active.ctx;
 
+	fimc_dbg("%s\n", __func__);
 	/* Interrupt pendding clear */
 	fimc_hwset_clear_irq(ctrl);
 
@@ -501,6 +508,7 @@ static int fimc_add_outgoing_queue(struct fimc_control *ctrl, int i)
 	struct fimc_buf_set *tmp_buf;
 	struct list_head *count;
 
+	fimc_dbg("%s\n", __func__);
 	spin_lock(&ctrl->outq_lock);
 
 	list_for_each(count, &cap->outgoing_q) {
@@ -529,6 +537,7 @@ static inline void fimc_irq_cap(struct fimc_control *ctrl)
 	u32 is_fn;
 
 	struct s3c_platform_fimc *pdata = to_fimc_plat(ctrl->dev);
+	//fimc_dbg("%s\n", __func__);
 	is_ctrl.id = 0;
 	is_ctrl.value = 0;
 #ifdef DEBUG
@@ -540,6 +549,8 @@ static inline void fimc_irq_cap(struct fimc_control *ctrl)
 		before_time.tv_usec = curr_time.tv_usec;
 	}
 #endif
+
+	fimc_warn("%s pdata->hw_ver='%x'", __func__, pdata->hw_ver);
 	fimc_hwset_clear_irq(ctrl);
 	if (fimc_hwget_overflow_state(ctrl)) {
 		ctrl->restart = true;
@@ -547,11 +558,14 @@ static inline void fimc_irq_cap(struct fimc_control *ctrl)
 	}
 
 	if (pdata->hw_ver >= 0x51) {
+		fimc_warn("%s ctrl->is_frame_end_irq=%d ctrl->status=0x%x", __func__, ctrl->is_frame_end_irq, ctrl->status);
 		if (ctrl->is_frame_end_irq ||
 			ctrl->status == FIMC_BUFFER_STOP) {
+			fimc_warn("%s Getting PP from present frame count,   is_frame_end_irq will be reset", __func__);
 			pp = fimc_hwget_present_frame_count(ctrl);
 			ctrl->is_frame_end_irq = 0;
 		} else {
+			fimc_warn("%s Getting PP before frame count", __func__);
 			pp = fimc_hwget_before_frame_count(ctrl);
 		}
 
@@ -561,9 +575,9 @@ static inline void fimc_irq_cap(struct fimc_control *ctrl)
 			cap->cnt++;
 		}
 
-		fimc_info2("%s[%d]\n", __func__, pp);
+		fimc_warn("%s[%d] ctrl->restart=%d ctrl->cap->nr_bufs=%d\n", __func__, pp, ctrl->restart, ctrl->cap->nr_bufs);
 		if (pp == 0 || ctrl->restart) {
-			printk(KERN_INFO "%s[%d] SKIPPED\n", __func__, pp);
+			fimc_dbg("%s[%d] SKIPPED\n", __func__, pp);
 			if (ctrl->cap->nr_bufs == 1) {
 				fimc_stop_capture(ctrl);
 #ifndef FIMC_FRAME_START_END_IRQ_ENABLE
@@ -589,6 +603,7 @@ static inline void fimc_irq_cap(struct fimc_control *ctrl)
 			return;
 		}
 
+		fimc_warn("%s use_isp=%d fimc_cam_use=%d", __func__, ctrl->cam->use_isp, fimc_cam_use);
 		buf_index = pp - 1;
 		if (ctrl->cam->use_isp && fimc_cam_use) {
 			is_ctrl.id = V4L2_CID_IS_GET_FRAME_NUMBER;
@@ -634,6 +649,7 @@ static inline void fimc_irq_cap(struct fimc_control *ctrl)
 			}
 		}
 
+		fimc_warn("%s cap->pktdata_enable=%d ctrl->cam->id='%s'", __func__, cap->pktdata_enable, (ctrl->cam->id == CAMERA_CSI_C)?"CAMERA_CSI_C":((ctrl->cam->id == CAMERA_CSI_D)?"CAMERA_CSI_D":"unknown") );
 		if (cap->pktdata_enable) {
 			if (ctrl->cam->id == CAMERA_CSI_C)
 				s3c_csis_get_pkt(CSI_CH_0 , cap->bufs[buf_index].vaddr_pktdata);
@@ -652,7 +668,8 @@ static inline void fimc_irq_cap(struct fimc_control *ctrl)
 
 		spin_unlock(&ctrl->inq_lock);
 
-		fimc_info2("%s[%d] : framecnt_seq: %d, available_bufnum: %d\n",
+		fimc_warn("%s ctrl->status=%d\n", __func__, ctrl->status);
+		fimc_warn("%s[%d] : framecnt_seq: %d, available_bufnum: %d\n",
 			__func__, ctrl->id, framecnt_seq, available_bufnum);
 		if (ctrl->status != FIMC_BUFFER_STOP) {
 			if (available_bufnum == 1) {
@@ -660,7 +677,7 @@ static inline void fimc_irq_cap(struct fimc_control *ctrl)
 				fimc_stop_capture(ctrl);
 				ctrl->is_frame_end_irq = 1;
 
-				printk(KERN_INFO "fimc_irq_cap available_bufnum = %d\n", available_bufnum);
+				fimc_dbg("%s available_bufnum = %d\n", __func__, available_bufnum);
 				ctrl->status = FIMC_BUFFER_STOP;
 			}
 		} else {
@@ -669,6 +686,7 @@ static inline void fimc_irq_cap(struct fimc_control *ctrl)
 	} else
 		pp = ((fimc_hwget_frame_count(ctrl) + 2) % 4);
 
+	fimc_warn("%s cap->fmt.field=%d\n", __func__, cap->fmt.field);
 	if (cap->fmt.field == V4L2_FIELD_INTERLACED_TB) {
 		/* odd value of pp means one frame is made with top/bottom */
 		if (pp & 0x1) {
@@ -765,8 +783,8 @@ static struct fimc_control *fimc_register_controller(struct platform_device *pde
 #ifdef CONFIG_ION_EXYNOS
 	}
 #endif
-	printk(KERN_DEBUG "ctrl->mem.size = 0x%x\n", ctrl->mem.size);
-	printk(KERN_DEBUG "ctrl->mem.base = 0x%x\n", ctrl->mem.base);
+	printk(KERN_DEBUG "%s ctrl->mem.size = 0x%x\n", __func__, ctrl->mem.size);
+	printk(KERN_DEBUG "%s ctrl->mem.base = 0x%x\n", __func__, ctrl->mem.base);
 	ctrl->mem.curr = ctrl->mem.base;
 #endif
 	ctrl->status = FIMC_STREAMOFF;
@@ -868,6 +886,7 @@ static int fimc_unregister_controller(struct platform_device *pdev)
 	struct fimc_control *ctrl;
 	int id = pdev->id;
 
+	//fimc_dbg("%s\n", __func__);
 	pdata = to_fimc_plat(&pdev->dev);
 	ctrl = get_fimc_ctrl(id);
 
@@ -893,6 +912,7 @@ static void fimc_mmap_open(struct vm_area_struct *vma)
 	u32 ctx		= (pri_data - (id * 0x100)) / 0x10;
 	u32 idx		= pri_data % 0x10;
 
+	//printk(KERN_INFO "%s\n", __func__);
 	BUG_ON(id >= FIMC_DEVICES);
 	BUG_ON(ctx >= FIMC_MAX_CTXS);
 	BUG_ON(idx >= FIMC_OUTBUFS);
@@ -908,6 +928,7 @@ static void fimc_mmap_close(struct vm_area_struct *vma)
 	u32 ctx		= (pri_data - (id * 0x100)) / 0x10;
 	u32 idx		= pri_data % 0x10;
 
+	//printk(KERN_INFO "%s\n", __func__);
 	BUG_ON(id >= FIMC_DEVICES);
 	BUG_ON(ctx >= FIMC_MAX_CTXS);
 	BUG_ON(idx >= FIMC_OUTBUFS);
@@ -931,6 +952,7 @@ int fimc_mmap_own_mem(struct file *filp, struct vm_area_struct *vma)
 	u32 pfn, idx = vma->vm_pgoff;
 	u32 buf_length = 0;
 
+	//printk(KERN_INFO "%s\n", __func__);
 	buf_length = ctrl->mem.size;
 	if (size > PAGE_ALIGN(buf_length)) {
 		fimc_err("Requested mmap size is too big\n");
@@ -978,6 +1000,7 @@ int fimc_mmap_out_src(struct file *filp, struct vm_area_struct *vma)
 	u32 buf_length = 0;
 	int pri_data = 0;
 
+	printk(KERN_INFO "%s\n", __func__);
 	buf_length = PAGE_ALIGN(ctx->src[idx].length[FIMC_ADDR_Y] +
 				ctx->src[idx].length[FIMC_ADDR_CB] +
 				ctx->src[idx].length[FIMC_ADDR_CR]);
@@ -1022,6 +1045,7 @@ int fimc_mmap_out_dst(struct file *filp, struct vm_area_struct *vma, u32 idx)
 	unsigned long pfn = 0, size;
 	int ret = 0;
 
+	printk(KERN_INFO "%s\n", __func__);
 	size = vma->vm_end - vma->vm_start;
 
 	vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
@@ -1048,6 +1072,7 @@ static inline int fimc_mmap_out(struct file *filp, struct vm_area_struct *vma)
 	int idx = ctrl->out->ctx[ctx_id].overlay.req_idx;
 	int ret = -1;
 
+	//printk(KERN_INFO "%s\n", __func__);
 #if 0
 	if (idx >= 0)
 		ret = fimc_mmap_out_dst(filp, vma, idx);
@@ -1068,6 +1093,7 @@ static inline int fimc_mmap_cap(struct file *filp, struct vm_area_struct *vma)
 	u32 size = vma->vm_end - vma->vm_start;
 	u32 pfn, idx = vma->vm_pgoff;
 
+	//printk(KERN_INFO "%s\n", __func__);
 	if (!ctrl->cap->cacheable)
 		vma->vm_page_prot = pgprot_writecombine(vma->vm_page_prot);
 
@@ -1122,6 +1148,7 @@ static void _fimc_dmabuf_put(struct vb2_buffer *vb)
 {
 	unsigned int plane;
 
+	printk(KERN_INFO "%s\n", __func__);
 	for (plane = 0; plane < vb->num_planes; ++plane) {
 		void *mem_priv = vb->planes[plane].mem_priv;
 
@@ -1369,6 +1396,8 @@ static u32 fimc_poll(struct file *filp, poll_table *wait)
 	struct fimc_control *ctrl = prv_data->ctrl;
 	struct fimc_capinfo *cap = ctrl->cap;
 	u32 mask = 0;
+
+	//printk(KERN_INFO "%s\n", __func__);
 
 	if (!cap)
 		return 0;
@@ -1659,6 +1688,7 @@ static int fimc_release(struct file *filp)
 	struct platform_device *pdev = to_platform_device(ctrl->dev);
 #endif
 
+	fimc_dbg("%s\n", __func__);
 	ctx = &ctrl->out->ctx[ctx_id];
 
 	pdata = to_fimc_plat(ctrl->dev);
@@ -1886,22 +1916,26 @@ struct video_device fimc_video_device[FIMC_DEVICES] = {
 		.fops = &fimc_fops,
 		.ioctl_ops = &fimc_v4l2_ops,
 		.release = fimc_vdev_release,
+		.debug = V4L2_DEBUG_IOCTL | V4L2_DEBUG_IOCTL_ARG,
 	},
 	[1] = {
 		.fops = &fimc_fops,
 		.ioctl_ops = &fimc_v4l2_ops,
 		.release = fimc_vdev_release,
+		.debug = V4L2_DEBUG_IOCTL | V4L2_DEBUG_IOCTL_ARG,
 	},
 	[2] = {
 		.fops = &fimc_fops,
 		.ioctl_ops = &fimc_v4l2_ops,
 		.release = fimc_vdev_release,
+		.debug = V4L2_DEBUG_IOCTL | V4L2_DEBUG_IOCTL_ARG,
 	},
 #ifdef CONFIG_ARCH_EXYNOS4
 	[3] = {
 		.fops = &fimc_fops,
 		.ioctl_ops = &fimc_v4l2_ops,
 		.release = fimc_vdev_release,
+		.debug = V4L2_DEBUG_IOCTL | V4L2_DEBUG_IOCTL_ARG,
 	},
 #endif
 };
@@ -2261,6 +2295,7 @@ static int __devinit fimc_probe(struct platform_device *pdev)
 
 	/* irq */
 	ctrl->irq = platform_get_irq(pdev, 0);
+	fimc_dbg("%s calling request_irq, irq=%d\n", __func__, ctrl->irq);
 	if (request_irq(ctrl->irq, fimc_irq, IRQF_DISABLED, ctrl->name, ctrl))
 		fimc_err("%s: request_irq failed\n", __func__);
 

@@ -328,7 +328,7 @@ static void dbgbuf(unsigned int cmd, struct video_device *vfd,
 	}
 
 	dbgarg2("timecode=%02d:%02d:%02d type=%d, "
-		"flags=0x%08d, frames=%d, userbits=0x%08x\n",
+		"flags=0x%08x, frames=%d, userbits=0x%08x\n",
 			tc->hours, tc->minutes, tc->seconds,
 			tc->type, tc->flags, tc->frames, *(__u32 *)tc->userbits);
 }
@@ -344,7 +344,7 @@ static inline void v4l_print_pix_fmt(struct video_device *vfd,
 						struct v4l2_pix_format *fmt)
 {
 	dbgarg2("width=%d, height=%d, format=%c%c%c%c, field=%s, "
-		"bytesperline=%d sizeimage=%d, colorspace=%d\n",
+		"bytesperline=%u sizeimage=%u, colorspace=%u\n",
 		fmt->width, fmt->height,
 		(fmt->pixelformat & 0xff),
 		(fmt->pixelformat >>  8) & 0xff,
@@ -370,7 +370,7 @@ static inline void v4l_print_pix_fmt_mplane(struct video_device *vfd,
 		fmt->colorspace, fmt->num_planes);
 
 	for (i = 0; i < fmt->num_planes; ++i)
-		dbgarg2("plane %d: bytesperline=%d sizeimage=%d\n", i,
+		dbgarg2("plane %d: bytesperline=%u sizeimage=%u\n", i,
 			fmt->plane_fmt[i].bytesperline,
 			fmt->plane_fmt[i].sizeimage);
 }
@@ -595,6 +595,8 @@ static long __video_do_ioctl(struct file *file,
 			break;
 		}
 	}
+
+	printk(KERN_WARNING "%s cmd=0x%x\n", __func__, cmd);
 
 	switch (cmd) {
 
@@ -1464,7 +1466,7 @@ static long __video_do_ioctl(struct file *file,
 		} else
 			break;
 		if (!ret)
-			dbgarg(cmd, "id=0x%x, value=%d\n", p->id, p->value);
+			dbgarg(cmd, "id=0x%x, value=%d(0x%x)\n", p->id, p->value, p->value);
 		else
 			dbgarg(cmd, "id=0x%x\n", p->id);
 		break;
@@ -1482,7 +1484,7 @@ static long __video_do_ioctl(struct file *file,
 		} else
 			break;
 		if (!ret)
-			dbgarg(cmd, "id=0x%x, value=%d\n", p->id, p->value);
+			dbgarg(cmd, "id=0x%x, value=%d(0x%x)\n", p->id, p->value, p->value);
 		else
 			dbgarg(cmd, "id=0x%x\n", p->id);
 		break;

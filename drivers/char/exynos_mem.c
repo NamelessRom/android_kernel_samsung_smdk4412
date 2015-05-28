@@ -67,6 +67,8 @@ enum cacheop { EM_CLEAN, EM_INV, EM_FLUSH };
 
 static void cache_maint_inner(void *vaddr, size_t size, enum cacheop op)
 {
+	printk(KERN_DEBUG "%s vaddr=0x%08x, size=%d, op=%d\n",
+			__func__, vaddr, size, op);
 	switch (op) {
 		case EM_CLEAN:
 			dmac_map_area(vaddr, size, DMA_TO_DEVICE);
@@ -84,8 +86,10 @@ static void cache_maint_phys(phys_addr_t start, size_t length, enum cacheop op)
 	size_t left = length;
 	phys_addr_t begin = start;
 
+	printk(KERN_DEBUG "%s start=0x%08x, length=%d, op=%d\n",
+				__func__, start, length, op);
 	if (!cma_is_registered_region(start, length)) {
-		pr_err("[%s] handling non-cma region (%#x@%#x)is prohibited\n",
+		pr_err("[%s] handling non-cma region (%#x@%#x) is prohibited\n",
 					__func__, length, start);
 		return;
 	}
@@ -149,6 +153,8 @@ outer_cache_ops:
 
 static void exynos_mem_paddr_cache_clean(dma_addr_t start, size_t length)
 {
+	printk(KERN_DEBUG "%s start=0x%08x, length=%d\n",
+					__func__, start, length);
 	if (length > (size_t) L2_FLUSH_ALL) {
 		flush_cache_all();		/* L1 */
 		smp_call_function((smp_call_func_t)__cpuc_flush_kern_all, NULL, 1);
@@ -179,6 +185,8 @@ long exynos_mem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 				__func__, __LINE__);
 			return -EFAULT;
 		}
+		printk(KERN_DEBUG "%s EXYNOS_MEM_SET_CACHEABLE mem=0x%08x, cacheable=%d\n",
+						__func__, filp->private_data, cacheable);
 		mem->cacheable = cacheable;
 		break;
 	}
@@ -194,6 +202,8 @@ long exynos_mem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			return -EFAULT;
 		}
 
+		printk(KERN_DEBUG "%s EXYNOS_MEM_PADDR_CACHE_FLUSH start=0x%08x, length=%d\n",
+								__func__, range.start, range.length);
 		cache_maint_phys(range.start, range.length, EM_FLUSH);
 		break;
 	}
@@ -208,6 +218,8 @@ long exynos_mem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 			return -EFAULT;
 		}
 
+		printk(KERN_DEBUG "%s EXYNOS_MEM_PADDR_CACHE_CLEAN start=0x%08x, length=%d\n",
+										__func__, range.start, range.length);
 		cache_maint_phys(range.start, range.length, EM_CLEAN);
 		break;
 	}
@@ -215,6 +227,8 @@ long exynos_mem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	{
 		struct exynos_mem *mem = filp->private_data;
 		int phyaddr;
+		printk(KERN_DEBUG "%s before EXYNOS_MEM_SET_PHYADDR arg=0x%08x\n",
+														__func__, *((u32 __user *) arg));
 		if (get_user(phyaddr, (u32 __user *)arg)) {
 			pr_err("[%s:%d] err: EXYNOS_MEM_SET_PHYADDR\n",
 				__func__, __LINE__);
@@ -222,6 +236,8 @@ long exynos_mem_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 		}
 		mem->phybase = phyaddr >> PAGE_SHIFT;
 
+		printk(KERN_DEBUG "%s EXYNOS_MEM_SET_PHYADDR phyaddr=0x%08x(0x%08x)\n",
+												__func__, phyaddr, mem->phybase);
 		break;
 	}
 
@@ -256,6 +272,8 @@ int exynos_mem_mmap(struct file *filp, struct vm_area_struct *vma)
 	u32 pfn = 0;
 	u32 size = vma->vm_end - vma->vm_start;
 
+	printk(KERN_DEBUG "%s cacheable=%d, start=0x%08x, vm_start=0x%08x, size=%d, vm_pgoff=0x%08x, pfn=0x%08x, flags==0x%x\n", __func__, cacheable, start, vma->vm_start, size, vma->vm_pgoff, pfn, vma->vm_flags);
+
 	if (vma->vm_pgoff) {
 		start = vma->vm_pgoff << PAGE_SHIFT;
 		pfn = vma->vm_pgoff;
@@ -265,7 +283,7 @@ int exynos_mem_mmap(struct file *filp, struct vm_area_struct *vma)
 	}
 
 	if (!cma_is_registered_region(start, size)) {
-		pr_err("[%s] handling non-cma region (%#x@%#x)is prohibited\n",
+		pr_err("[%s] handling non-cma region (%#x@%#x) is prohibited\n",
 						__func__, size, start);
 		return -EINVAL;
 	}
@@ -286,6 +304,7 @@ int exynos_mem_mmap(struct file *filp, struct vm_area_struct *vma)
 		return -EINVAL;
 	}
 
+	printk(KERN_DEBUG "%s PAGE_SHIFT=%d cacheable=%d, start=0x%08x, vm_start=0x%08x, size=%d, vm_pgoff=0x%08x, pfn=0x%08x, flags==0x%x\n", __func__, PAGE_SHIFT, cacheable, start, vma->vm_start, size, vma->vm_pgoff, pfn, vma->vm_flags);
 	vma->vm_ops->open(vma);
 
 	return 0;

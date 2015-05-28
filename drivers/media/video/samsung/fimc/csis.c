@@ -397,6 +397,7 @@ static int s3c_csis_probe(struct platform_device *pdev)
 
 	/* irq */
 	s3c_csis[pdev->id]->irq = platform_get_irq(pdev, 0);
+	printk(KERN_INFO "%s calling request_irq, irq=%d\n",__func__, s3c_csis[pdev->id]->irq);
 	ret = request_irq(s3c_csis[pdev->id]->irq, s3c_csis_irq, IRQF_DISABLED,
 			s3c_csis[pdev->id]->name, pdev);
 	if (ret) {
