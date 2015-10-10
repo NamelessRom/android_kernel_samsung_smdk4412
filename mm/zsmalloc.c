@@ -872,7 +872,7 @@ static void reset_page(struct page *page)
 	set_page_private(page, 0);
 	page->mapping = NULL;
 	page->freelist = NULL;
-	page_mapcount_reset(page);
+	reset_page_mapcount(page);
 }
 
 static void free_zspage(struct page *first_page)
@@ -1028,7 +1028,7 @@ static inline int __zs_cpu_up(struct mapping_area *area)
 	 */
 	if (area->vm)
 		return 0;
-	area->vm = alloc_vm_area(PAGE_SIZE * 2, NULL);
+	area->vm = alloc_vm_area(PAGE_SIZE * 2);
 	if (!area->vm)
 		return -ENOMEM;
 	return 0;
@@ -1172,6 +1172,7 @@ static struct notifier_block zs_cpu_nb = {
 
 static int zs_register_cpu_notifier(void)
 {
+#if 0
 	int cpu, uninitialized_var(ret);
 
 	cpu_notifier_register_begin();
@@ -1185,10 +1186,14 @@ static int zs_register_cpu_notifier(void)
 
 	cpu_notifier_register_done();
 	return notifier_to_errno(ret);
+#else
+	return 0;
+#endif
 }
 
 static void zs_unregister_cpu_notifier(void)
 {
+#if 0
 	int cpu;
 
 	cpu_notifier_register_begin();
@@ -1198,6 +1203,9 @@ static void zs_unregister_cpu_notifier(void)
 	__unregister_cpu_notifier(&zs_cpu_nb);
 
 	cpu_notifier_register_done();
+#else
+	return 0;
+#endif
 }
 
 static void init_zs_size_classes(void)
