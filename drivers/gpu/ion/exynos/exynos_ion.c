@@ -523,20 +523,27 @@ static int ion_exynos_contig_heap_phys(struct ion_heap *heap,
 static struct scatterlist *ion_exynos_contig_heap_map_dma(struct ion_heap *heap,
 						   struct ion_buffer *buffer)
 {
-	struct scatterlist *sglist;
+	struct sg_table *table;
+	int ret;
 
-	sglist = vmalloc(sizeof(struct scatterlist));
-	if (!sglist)
+	table = kmalloc(sizeof(struct sg_table), GFP_KERNEL);
+	if (!table)
 		return ERR_PTR(-ENOMEM);
-	sg_init_table(sglist, 1);
-	sg_set_page(sglist, phys_to_page(buffer->priv_phys), buffer->size, 0);
-	return sglist;
+	ret = sg_alloc_table(table, 1, GFP_KERNEL);
+	if (ret)
+		goto err;
+	sg_set_page(table, phys_to_page(buffer->priv_phys), buffer->size, 0);
+	buffer->priv_virt = table;
+	return table;
+err:
+	kfree(table);
+	return -ENOMEM;
 }
 
 static void ion_exynos_contig_heap_unmap_dma(struct ion_heap *heap,
 			       struct ion_buffer *buffer)
 {
-	vfree(buffer->sglist);
+	kfree(buffer->sg_table);
 }
 
 static int ion_exynos_contig_heap_map_user(struct ion_heap *heap,
