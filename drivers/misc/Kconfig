@@ -661,12 +661,6 @@ config STMPE811_ADC
 	---help---
 	  Say yes here to build support for STMPE811 8 channel ADC driver
 
-config TIMA_LOG
-	tristate "Support for dumping TIMA log"
-	default y
-	help
-	  This option enables support for dumping TIMA log
-
 config MPU_SENSORS_MPU3050
     tristate "MPU3050"
     depends on I2C
