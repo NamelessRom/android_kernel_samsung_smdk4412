@@ -1800,13 +1800,6 @@ config SEC_AVC_LOG
 	help
 	  This option enables additional log buffer for audit log.
 
-config SEC_DEBUG_TIMA_LOG
-	default n
-	bool "Enable tima log support" if EMBEDDED
-	depends on SEC_DEBUG
-	help
-	  This option enables additional log buffer for tsp log.
-
 config EHCI_IRQ_DISTRIBUTION
 	bool "ehci irq distribution"
 	default n

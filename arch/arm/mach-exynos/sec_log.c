@@ -369,27 +369,3 @@ static int __init sec_log_late_init(void)
 
 late_initcall(sec_log_late_init);
 #endif
-
-#ifdef CONFIG_SEC_DEBUG_TIMA_LOG
-static int __init sec_tima_log_setup(char *str)
-{
-	unsigned size = memparse(str, &str);
-	unsigned long base = 0;
-	/* If we encounter any problem parsing str ... */
-	if (!size || size != roundup_pow_of_two(size) || *str != '@'
-		|| kstrtoul(str + 1, 0, &base))
-			goto out;
-
-	if (reserve_bootmem(base , size, BOOTMEM_EXCLUSIVE)) {
-		pr_err("%s: failed reserving size %d " \
-				"at base 0x%lx\n", __func__, size, base);
-		goto out;
-	}
-	pr_info("tima :%s, base:%lx, size:%x \n", __func__,base, size);
-
-	return 1;
-out:
-	return 0;
-}
-__setup("sec_tima_log=", sec_tima_log_setup);
-#endif

@@ -155,9 +155,6 @@ source "drivers/barcode_emul/Kconfig"
 # MUIC
 source "drivers/muic/Kconfig"
 
-# Secure OS Mobicore
-source "drivers/gud20/Kconfig"
-
 source "drivers/iommu/Kconfig"
 
 # FELICA
