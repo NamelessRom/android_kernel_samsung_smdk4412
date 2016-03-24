@@ -175,7 +175,7 @@ void bcm_bt_lpm_exit_lpm_locked(struct uart_port *uport)
 	bt_is_running = 1;
 	set_wake_locked(1);
 
-	pr_info("[BT] bt_lpm_exit_lpm_locked.\n");
+	pr_debug("[BT] bt_lpm_exit_lpm_locked.\n");
 	hrtimer_start(&bt_lpm.enter_lpm_timer, bt_lpm.enter_lpm_delay,
 		HRTIMER_MODE_REL);
 }
